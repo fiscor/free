@@ -1,0 +1,814 @@
+<!--
+  This standalone invoice generator replicates the same design language used in the main
+  application. It provides a simple interface to enter seller and client details,
+  manage line items, select fiscal scenarios and preview the resulting invoice. A
+  built‑in PDF generator (html2pdf.js) allows exporting the preview as a clean
+  document. The page is self‑contained so you can drop it into your project
+  without pulling in the rest of the app.
+-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Générateur de Facture</title>
+
+    <!-- Police Inter (Google Fonts) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- PDF Generation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <style>
+        /*
+            The following variables and styles mirror those used in the main FISCOR
+            interface. Keeping them here ensures the invoice tool feels like part
+            of the same family even when isolated in its own file.
+        */
+        :root {
+            --bg-main: #F8FAFC;
+            --bg-card: #FFFFFF;
+            --bg-card-hover: #F1F5F9;
+            --text-main: #0F172A;
+            --text-secondary: #64748B;
+            --border: #E2E8F0;
+            --border-highlight: #94A3B8;
+            --accent: #14532D;
+            --accent-glow: #15803D;
+            --danger: #DC2626;
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+        }
+
+        /* Layout container */
+        .invoice-workspace {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            width: 100%;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .invoice-editor, .invoice-preview-container {
+            flex: 1;
+            min-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Form sections */
+        .form-section {
+            background: var(--bg-card);
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-card);
+        }
+
+        .form-section h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-full {
+            grid-column: 1 / -1;
+        }
+
+        .inp-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .inp-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .inp-field {
+            width: 100%;
+            background: var(--bg-main);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .inp-field:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(20, 83, 45, 0.1);
+            outline: none;
+            background: white;
+        }
+
+        /* Custom select arrow */
+        select.inp-field {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230F172A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 40px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        /* Line items */
+        .line-item {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1.5fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 12px;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .line-item:last-child {
+            border-bottom: none;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 4px;
+            border-radius: 4px;
+            transition: color 0.2s, background 0.2s;
+        }
+
+        .btn-icon:hover {
+            color: var(--danger);
+            background: #FEE2E2;
+        }
+
+        .btn-add-line {
+            background: var(--bg-card);
+            border: 1px dashed var(--border);
+            color: var(--text-secondary);
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-add-line:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: #F0FDF4;
+        }
+
+        /* Toolbar buttons */
+        .btn-toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .btn-tool {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.2s, border-color 0.2s;
+            color: var(--text-main);
+            fill: currentColor;
+        }
+
+        .btn-tool:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-highlight);
+        }
+
+        .btn-tool.primary {
+            background: var(--text-main);
+            color: white;
+            border-color: var(--text-main);
+        }
+
+        .btn-tool.primary:hover {
+            background: #000;
+        }
+
+        /* Invoice preview */
+        .invoice-paper {
+            background: white;
+            color: black;
+            padding: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            min-height: 800px;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            border-radius: 2px;
+        }
+
+        .ip-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 50px;
+            align-items: flex-start;
+        }
+
+        .ip-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #000;
+            margin-bottom: 20px;
+        }
+
+        .ip-seller, .ip-client {
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #333;
+        }
+
+        .ip-client {
+            text-align: right;
+        }
+
+        .ip-meta {
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            border-top: 2px solid #000;
+            padding-top: 20px;
+        }
+
+        .ip-meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .ip-meta-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .ip-meta-val {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #000;
+        }
+
+        .ip-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+        }
+
+        .ip-table th {
+            text-align: left;
+            border-bottom: 2px solid #000;
+            padding: 10px 0;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #000;
+            font-weight: 700;
+        }
+
+        .ip-table td {
+            padding: 16px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        .ip-table td.num,
+        .ip-table th.num {
+            text-align: right;
+            font-family: monospace;
+            font-size: 0.95rem;
+        }
+
+        .ip-totals {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+            margin-bottom: 40px;
+        }
+
+        .ip-total-row {
+            display: flex;
+            justify-content: space-between;
+            width: 250px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .ip-total-row.final {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #000;
+            border-top: 2px solid #000;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .ip-legal {
+            font-size: 0.75rem;
+            color: #666;
+            line-height: 1.5;
+            margin-top: auto;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .ip-footer {
+            margin-top: 30px;
+            font-size: 0.7rem;
+            text-align: center;
+            color: #999;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .invoice-workspace {
+                flex-direction: column;
+            }
+            .line-item {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                border: 1px solid var(--border);
+                padding: 10px;
+                border-radius: 8px;
+                position: relative;
+            }
+            .line-item input:nth-child(1) {
+                grid-column: 1 / -1;
+            }
+            .line-item button {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:20px;">Générateur de Facture</h1>
+    <div class="invoice-workspace">
+        <!-- Editor column -->
+        <div class="invoice-editor">
+            <div class="btn-toolbar">
+                <button class="btn-tool" onclick="resetInvoice()">
+                    <!-- Reset icon -->
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                    Réinitialiser
+                </button>
+                <button class="btn-tool" onclick="saveDraft()">
+                    <!-- Save icon -->
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Sauvegarder
+                </button>
+                <button class="btn-tool primary" onclick="printInvoice()">
+                    <!-- PDF icon -->
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    Télécharger PDF
+                </button>
+            </div>
+
+            <div class="form-section">
+                <h3>Vendeur (Vous)</h3>
+                <div class="form-grid">
+                    <div class="inp-group form-full">
+                        <label class="inp-label">Raison Sociale / Nom</label>
+                        <input class="inp-field" id="seller-name" placeholder="FISCOR SAS" oninput="updateInv('seller','name',this.value)">
+                    </div>
+                    <div class="inp-group form-full">
+                        <label class="inp-label">Adresse complète</label>
+                        <input class="inp-field" id="seller-address" placeholder="12 rue de la Paix, 75000 Paris" oninput="updateInv('seller','address',this.value)">
+                    </div>
+                    <div class="inp-group">
+                        <label class="inp-label">SIRET</label>
+                        <input class="inp-field" id="seller-siret" placeholder="888 999 000 00012" oninput="updateInv('seller','siret',this.value)">
+                    </div>
+                    <div class="inp-group">
+                        <label class="inp-label">Email</label>
+                        <input class="inp-field" id="seller-email" placeholder="contact@fiscor.com" oninput="updateInv('seller','email',this.value)">
+                    </div>
+                    <div class="inp-group form-full">
+                        <label class="inp-label">N° TVA Intracom (Optionnel)</label>
+                        <input class="inp-field" id="seller-tva" placeholder="FR 12 888999000" oninput="updateInv('seller','tva',this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Client</h3>
+                <div class="form-grid">
+                    <div class="inp-group form-full">
+                        <label class="inp-label">Raison Sociale / Nom</label>
+                        <input class="inp-field" id="client-name" placeholder="Client SARL" oninput="updateInv('client','name',this.value)">
+                    </div>
+                    <div class="inp-group form-full">
+                        <label class="inp-label">Adresse</label>
+                        <input class="inp-field" id="client-address" oninput="updateInv('client','address',this.value)">
+                    </div>
+                    <div class="inp-group">
+                        <label class="inp-label">Email</label>
+                        <input class="inp-field" id="client-email" oninput="updateInv('client','email',this.value)">
+                    </div>
+                    <div class="inp-group">
+                        <label class="inp-label">N° TVA Intracom</label>
+                        <input class="inp-field" id="client-tva" oninput="updateInv('client','tva',this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Facture</h3>
+                <div class="form-grid">
+                    <div class="inp-group">
+                        <label class="inp-label">Numéro</label>
+                        <input class="inp-field" id="invoice-number" oninput="updateInv('invoice','number',this.value)">
+                    </div>
+                    <div class="inp-group">
+                        <label class="inp-label">Date émission</label>
+                        <input type="date" class="inp-field" id="invoice-date" oninput="updateInv('invoice','date',this.value)">
+                    </div>
+                    <div class="inp-group form-full">
+                        <label class="inp-label">Objet / Projet</label>
+                        <input class="inp-field" id="invoice-obj" placeholder="Développement Site Web" oninput="updateInv('invoice','obj',this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Lignes &amp; Prestations</h3>
+                <div id="lines-container">
+                    <!-- items injected here -->
+                </div>
+                <button class="btn-add-line" onclick="addItem()">+ Ajouter une ligne</button>
+            </div>
+
+            <div class="form-section">
+                <h3>Mentions &amp; Paiement</h3>
+                <div class="form-grid">
+                    <div class="inp-group form-full">
+                        <label class="inp-label">Scénario Fiscal</label>
+                        <select class="inp-field" id="scenario-select" onchange="updateInv('settings','scenario',this.value); updatePreview();">
+                            <option value="std">Standard (TVA 20%)</option>
+                            <option value="micro">Micro-Entreprise (Pas de TVA)</option>
+                            <option value="ue_b2b">UE B2B (Autoliquidation)</option>
+                            <option value="ue_services">UE Services (Autoliquidation)</option>
+                            <option value="export">Hors UE (Export)</option>
+                        </select>
+                    </div>
+                    <div class="inp-group">
+                        <label class="inp-label">Acompte déjà reçu (€)</label>
+                        <input type="number" class="inp-field" id="acompte" value="0" oninput="updateInv('settings','acompte',this.value)">
+                    </div>
+                    <div class="inp-group form-full">
+                        <label class="inp-label">Note / IBAN</label>
+                        <textarea class="inp-field" rows="2" id="note" oninput="updateInv('settings','note',this.value)"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Preview column -->
+        <div class="invoice-preview-container">
+            <div id="invoice-paper" class="invoice-paper">
+                <!-- preview rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+    /*
+        Core data structure. All fields are kept in this object so the preview and
+        persistent storage remain in sync. Some defaults are provided to illustrate
+        the layout; these can be modified by interacting with the form inputs.
+    */
+    let invData = {
+        seller: { name:'', address:'', siret:'', tva:'', email:'' },
+        client: { name:'', address:'', tva:'', email:'' },
+        invoice: { number:'', date:'', obj:'' },
+        items: [ { desc:'Prestation', qty:1, price:500, tva:20 } ],
+        settings: { scenario:'std', acompte:0, note:'' }
+    };
+
+    // Fiscal scenario descriptions mirrored from the main application
+    const SCENARIOS = {
+        'std': 'TVA acquittée sur les encaissements.',
+        'micro': 'TVA non applicable, art. 293 B du CGI.',
+        'ue_b2b': 'Autoliquidation. Exonération TVA, art. 262 ter I du CGI.',
+        'ue_services': 'Autoliquidation, art 283-2 du CGI.',
+        'export': 'Exonération de TVA, article 262-I du CGI.'
+    };
+
+    // Populate default dates and invoice number on first load
+    function initialiseDefaults() {
+        // Try to load existing draft
+        const draft = localStorage.getItem('facture_draft');
+        if (draft) {
+            invData = JSON.parse(draft);
+        }
+        // Set default invoice number if missing
+        if (!invData.invoice.number) {
+            const counter = localStorage.getItem('facture_counter') || 1;
+            const year = new Date().getFullYear();
+            invData.invoice.number = `F-${year}-${String(counter).padStart(4,'0')}`;
+        }
+        // Set default date if missing
+        if (!invData.invoice.date) {
+            invData.invoice.date = new Date().toISOString().split('T')[0];
+        }
+        // Reflect values into inputs
+        document.getElementById('invoice-number').value = invData.invoice.number;
+        document.getElementById('invoice-date').value = invData.invoice.date;
+        document.getElementById('seller-name').value = invData.seller.name;
+        document.getElementById('seller-address').value = invData.seller.address;
+        document.getElementById('seller-siret').value = invData.seller.siret;
+        document.getElementById('seller-tva').value = invData.seller.tva;
+        document.getElementById('seller-email').value = invData.seller.email;
+        document.getElementById('client-name').value = invData.client.name;
+        document.getElementById('client-address').value = invData.client.address;
+        document.getElementById('client-email').value = invData.client.email;
+        document.getElementById('client-tva').value = invData.client.tva;
+        document.getElementById('invoice-obj').value = invData.invoice.obj;
+        document.getElementById('scenario-select').value = invData.settings.scenario;
+        document.getElementById('acompte').value = invData.settings.acompte;
+        document.getElementById('note').value = invData.settings.note;
+        renderRows();
+        updatePreview();
+    }
+
+    // Update a simple field within invData and refresh preview
+    function updateInv(section, field, value) {
+        if (section && field !== null) {
+            invData[section][field] = value;
+        }
+        updatePreview();
+    }
+
+    // Update a line item and refresh preview
+    function updateItem(idx, field, value) {
+        invData.items[idx][field] = value;
+        updatePreview();
+    }
+
+    // Add a new empty line item
+    function addItem() {
+        invData.items.push({ desc:'', qty:1, price:0, tva:20 });
+        renderRows();
+        updatePreview();
+    }
+
+    // Remove a line item if more than one exists
+    function removeItem(idx) {
+        if (invData.items.length > 1) {
+            invData.items.splice(idx, 1);
+            renderRows();
+            updatePreview();
+        }
+    }
+
+    // Re-render the list of line items in the DOM
+    function renderRows() {
+        const container = document.getElementById('lines-container');
+        if (!container) return;
+        container.innerHTML = invData.items.map((item, idx) => {
+            return `
+                <div class="line-item">
+                    <input class="inp-field" placeholder="Description" value="${item.desc || ''}" oninput="updateItem(${idx}, 'desc', this.value)">
+                    <input type="number" class="inp-field" placeholder="Qté" value="${item.qty}" oninput="updateItem(${idx}, 'qty', this.value)">
+                    <input type="number" class="inp-field" placeholder="Prix HT" value="${item.price}" oninput="updateItem(${idx}, 'price', this.value)">
+                    <select class="inp-field" onchange="updateItem(${idx}, 'tva', this.value)">
+                        <option value="0" ${Number(item.tva) === 0 ? 'selected' : ''}>0%</option>
+                        <option value="5.5" ${Number(item.tva) === 5.5 ? 'selected' : ''}>5.5%</option>
+                        <option value="10" ${Number(item.tva) === 10 ? 'selected' : ''}>10%</option>
+                        <option value="20" ${Number(item.tva) === 20 ? 'selected' : ''}>20%</option>
+                    </select>
+                    <button class="btn-icon" onclick="removeItem(${idx})">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Update the invoice preview inside the .invoice-paper element
+    function updatePreview() {
+        const paper = document.getElementById('invoice-paper');
+        if (!paper) return;
+        let totalHT = 0;
+        let totalTVA = 0;
+        const rowsHtml = invData.items.map(item => {
+            const qty = parseFloat(item.qty) || 0;
+            const price = parseFloat(item.price) || 0;
+            const tva = parseFloat(item.tva) || 0;
+            const lineHT = qty * price;
+            const lineTVA = lineHT * (tva / 100);
+            totalHT += lineHT;
+            totalTVA += lineTVA;
+            return `
+                <tr>
+                    <td>${item.desc || 'Prestation'}</td>
+                    <td class="num">${qty}</td>
+                    <td class="num">${price.toFixed(2)} €</td>
+                    <td class="num">${tva}%</td>
+                    <td class="num">${lineHT.toFixed(2)} €</td>
+                </tr>
+            `;
+        }).join('');
+        const totalTTC = totalHT + totalTVA;
+        const netPayable = totalTTC - (parseFloat(invData.settings.acompte) || 0);
+        const legalText = SCENARIOS[invData.settings.scenario] || '';
+        paper.innerHTML = `
+            <div class="ip-header">
+                <div>
+                    <div class="ip-logo">${invData.seller.name || 'Votre Nom'}</div>
+                    <div class="ip-seller">
+                        ${invData.seller.address || 'Adresse vendeur'}<br>
+                        ${invData.seller.siret ? 'SIRET: ' + invData.seller.siret : ''}<br>
+                        ${invData.seller.email ? 'Email: ' + invData.seller.email : ''}
+                    </div>
+                </div>
+                <div class="ip-client">
+                    <strong>FACTURÉ À :</strong><br>
+                    ${invData.client.name || 'Nom Client'}<br>
+                    ${invData.client.address || 'Adresse Client'}<br>
+                    ${invData.client.tva ? 'TVA: ' + invData.client.tva : ''}
+                </div>
+            </div>
+            <div class="ip-meta">
+                <div class="ip-meta-item">
+                    <span class="ip-meta-label">Numéro</span>
+                    <span class="ip-meta-val">${invData.invoice.number || 'DRAFT'}</span>
+                </div>
+                <div class="ip-meta-item">
+                    <span class="ip-meta-label">Date</span>
+                    <span class="ip-meta-val">${invData.invoice.date}</span>
+                </div>
+                <div class="ip-meta-item" style="flex:2; text-align:right;">
+                    <span class="ip-meta-label">Objet</span>
+                    <span class="ip-meta-val">${invData.invoice.obj || '-'}</span>
+                </div>
+            </div>
+            <table class="ip-table">
+                <thead>
+                    <tr>
+                        <th width="40%">Description</th>
+                        <th width="10%" class="num">Qté</th>
+                        <th width="15%" class="num">Prix U.</th>
+                        <th width="10%" class="num">TVA</th>
+                        <th width="25%" class="num">Total HT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                </tbody>
+            </table>
+            <div class="ip-totals">
+                <div class="ip-total-row"><span>Total HT</span><span>${totalHT.toFixed(2)} €</span></div>
+                <div class="ip-total-row"><span>Total TVA</span><span>${totalTVA.toFixed(2)} €</span></div>
+                <div class="ip-total-row final"><span>Total TTC</span><span>${totalTTC.toFixed(2)} €</span></div>
+                ${invData.settings.acompte > 0 ? `
+                    <div class="ip-total-row" style="color:var(--text-secondary);margin-top:10px;"><span>Déjà payé (Acompte)</span><span>- ${Number(invData.settings.acompte).toFixed(2)} €</span></div>
+                    <div class="ip-total-row final" style="color:var(--accent);"><span>NET À PAYER</span><span>${netPayable.toFixed(2)} €</span></div>
+                ` : ''}
+            </div>
+            <div class="ip-legal">
+                <strong>Mentions légales :</strong><br>
+                ${legalText}<br>
+                ${invData.settings.note ? '<br>Note : ' + invData.settings.note : ''}<br>
+                <br>
+                En cas de retard de paiement, indemnité forfaitaire de 40€ pour frais de recouvrement.<br>
+                Pas d'escompte pour paiement anticipé.
+            </div>
+            <div class="ip-footer">Généré par FISCOR - Bouclier Fiscal Stratégique</div>
+        `;
+    }
+
+    // Reset the invoice form and stored draft
+    function resetInvoice() {
+        if (confirm('Tout effacer ?')) {
+            localStorage.removeItem('facture_draft');
+            invData = {
+                seller: { name:'', address:'', siret:'', tva:'', email:'' },
+                client: { name:'', address:'', tva:'', email:'' },
+                invoice: { number:'', date:'', obj:'' },
+                items: [ { desc:'Prestation', qty:1, price:500, tva:20 } ],
+                settings: { scenario:'std', acompte:0, note:'' }
+            };
+            initialiseDefaults();
+        }
+    }
+
+    // Save current invoice to localStorage
+    function saveDraft() {
+        localStorage.setItem('facture_draft', JSON.stringify(invData));
+        // Increment counter on save
+        let count = parseInt(localStorage.getItem('facture_counter') || '1', 10);
+        count++;
+        localStorage.setItem('facture_counter', count);
+        alert('Brouillon sauvegardé.');
+    }
+
+    // Generate and download PDF of invoice preview
+    function printInvoice() {
+        const element = document.getElementById('invoice-paper');
+        const button = event.currentTarget;
+        const originalText = button.innerHTML;
+        button.innerHTML = 'Génération...';
+        button.style.opacity = '0.7';
+        button.disabled = true;
+        // Force width for mobile
+        const isMobile = window.innerWidth < 768;
+        const originalStyle = element.style.cssText;
+        if (isMobile) {
+            element.style.width = '800px';
+            element.style.maxWidth = 'none';
+        }
+        const filename = (invData.invoice.number || 'facture') + '.pdf';
+        const opt = {
+            margin: [10, 10, 10, 10],
+            filename: filename,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save().then(() => {
+            button.innerHTML = originalText;
+            button.style.opacity = '1';
+            button.disabled = false;
+            if (isMobile) element.style.cssText = originalStyle;
+        }).catch(() => {
+            alert('Erreur lors de la génération PDF.');
+            button.innerHTML = originalText;
+            button.style.opacity = '1';
+            button.disabled = false;
+            if (isMobile) element.style.cssText = originalStyle;
+        });
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', initialiseDefaults);
+    </script>
+</body>
+</html>
