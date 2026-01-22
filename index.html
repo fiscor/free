@@ -1,989 +1,1403 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+   <link rel="icon" type="image/png" href="bouclier.png">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FISCOR | Version Gratuite</title>
-    <meta name="description" content="Interface Stratégique Fiscale - Version Découverte">
-    <meta name="theme-color" content="#F8FAFC">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiscor - Version Gratuite</title>
+    <meta name="description" content="L'application ultime pour gérer votre entreprise avec l'aide de l'IA.">
     
-    <!-- Police Inter (Google Fonts) -->
+    <!-- Font Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+
     <style>
-        /* --- RESET & VARIABLES (LIGHT THEME) --- */
+        /* --- VARIABLES & RESET --- */
         :root {
-            --bg-main: #F8FAFC;       /* Fond principal : Blanc cassé très léger */
-            --bg-card: #FFFFFF;       /* Cartes : Blanc pur */
-            --bg-card-hover: #F1F5F9; /* Hover : Gris très léger */
-            --text-main: #0F172A;     /* Texte : Noir Encre (Slate 900) */
-            --text-secondary: #64748B;/* Secondaire : Gris Moyen (Slate 500) */
-            --border: #E2E8F0;        /* Bordures : Gris clair (Slate 200) */
-            --border-highlight: #94A3B8; /* Bordures focus : Gris moyen */
-            --accent: #14532D;        /* Vert profond FISCOR */
-            --accent-glow: #15803D;   /* Vert pour focus/états actifs */
-            --accent-pro: #7C3AED;    /* Violet PRO (Demandé) */
-            --accent-pro-dark: #5B21B6;
-            --danger: #DC2626;
-            --locked: #94A3B8;        /* Couleur éléments verrouillés */
-            --transition-fast: 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            --transition-smooth: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            --glass: rgba(248, 250, 252, 0.9);
+            --primary: #7C3AED;
+            --primary-hover: #6D28D9;
+            --primary-light: #F3E8FF;
+            --bg-body: #F9FAFB;
+            --bg-card: #FFFFFF;
+            --text-main: #111827;
+            --text-secondary: #6B7280;
+            --border-light: #E5E7EB;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-pill: 9999px;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            
+            --nav-width: 280px;
+            --header-height: 80px;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; outline-color: var(--primary); }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); font-size: 16px; line-height: 1.5; overflow-x: hidden; }
 
-        /* --- UTILS --- */
-        .hidden { display: none !important; }
-        .fade-in { animation: fadeIn 0.4s var(--transition-smooth) forwards; }
-        .slide-up { animation: slideUp 0.6s var(--transition-smooth) forwards; }
+        /* --- SPLASH & GATE STYLES --- */
+        #splash-screen {
+            position: fixed; inset: 0; background-color: var(--primary); z-index: 99999;
+            display: flex; justify-content: center; align-items: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
         
-        /* Utility classes for locking */
-        .is-locked { 
-            opacity: 0.6; 
-            pointer-events: none; 
-            filter: grayscale(0.8); 
+        .liquid-container {
             position: relative;
         }
-        
-        .nav-locked {
-            opacity: 0.5;
-            cursor: not-allowed !important;
+
+        .liquid-text {
+            font-size: 10vw;
+            font-weight: 900;
+            color: rgba(0, 0, 0, 0.2);
+            text-transform: uppercase;
+            position: relative;
+            user-select: none;
+            letter-spacing: -2px;
         }
-        
-        .lock-icon-overlay {
+
+        .liquid-text::before {
+            content: attr(data-text);
             position: absolute;
-            top: 10px;
-            right: 10px;
-            color: var(--text-secondary);
-            z-index: 10;
-        }
-
-        .premium-badge {
-            display: inline-block;
-            background: #000;
-            color: #fff;
-            font-size: 0.6rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* --- LOCK SCREEN (ENTRY) --- */
-        #view-lock {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at center, #FFFFFF 0%, #F1F5F9 80%);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 1;
-            transition: opacity 0.5s ease;
-        }
-        #view-lock.fade-out {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .lock-container {
-            text-align: center;
+            top: 0; left: 0;
             width: 100%;
-            max-width: 320px;
-            padding: 20px;
+            height: 100%;
+            color: white;
+            overflow: hidden;
+            animation: liquidFill 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            /* Masque pour effet de remplissage */
+            clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0 100%);
         }
 
-        .brand-logo {
-            font-size: 2rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            margin-bottom: 0.5rem;
-            color: var(--text-main);
+        @keyframes liquidFill {
+            0% { clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0 100%); }
+            20% { clip-path: polygon(0 100%, 100% 100%, 100% 85%, 0 90%); }
+            40% { clip-path: polygon(0 80%, 100% 90%, 100% 100%, 0 100%); }
+            60% { clip-path: polygon(0 60%, 100% 50%, 100% 100%, 0 100%); }
+            80% { clip-path: polygon(0 30%, 100% 40%, 100% 100%, 0 100%); }
+            100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
         }
 
-        .brand-sub {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--text-secondary);
-            margin-bottom: 3rem;
-            opacity: 0.7;
+        /* Gate Overlay (Auth/Premium Check) */
+        #premium-gate {
+            position: fixed; inset: 0; background-color: rgba(255,255,255,0.96); backdrop-filter: blur(10px);
+            z-index: 99998; display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; text-align: center;
         }
-
-        .btn-access {
-            background: var(--text-main); /* Noir pour l'entrée */
-            border: 1px solid var(--text-main);
-            color: #fff;
-            padding: 14px 30px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-            box-shadow: var(--shadow-card);
-            width: 100%;
+        .gate-card {
+            background: white; padding: 48px; border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg); border: 1px solid var(--border-light);
+            max-width: 480px; width: 100%; animation: slideUp 0.4s ease;
         }
-
-        .btn-access:hover {
-            background: #333;
-            transform: translateY(-2px);
-        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        .free-notice {
-            margin-top: 20px;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        /* --- LOADING SCREEN --- */
-        #view-loading {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-main);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 900;
-        }
-
-        .loader-ring {
-            width: 50px;
-            height: 50px;
-            border: 2px solid rgba(0,0,0,0.05);
-            border-top: 2px solid var(--accent);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-
-        .loader-text {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            letter-spacing: 1px;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
-
-        /* --- APP LAYOUT --- */
-        #view-app {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-            opacity: 0;
-            transition: opacity 0.8s ease;
-        }
-
-        #view-app.visible { opacity: 1; }
-
-        .sidebar {
-            width: 260px;
-            background: var(--bg-main);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 24px 0;
-            flex-shrink: 0;
-            z-index: 50;
-        }
-
-        .sidebar-header { padding: 0 24px 30px; }
-        .sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 0 12px; }
-
-        .nav-item {
-            display: flex; align-items: center; padding: 12px 16px; border-radius: 8px;
-            color: var(--text-secondary); text-decoration: none; font-size: 0.95rem;
-            transition: all var(--transition-fast); cursor: pointer; position: relative;
-        }
-        .nav-item:hover:not(.nav-locked) { background: rgba(0, 0, 0, 0.04); color: var(--text-main); }
-        .nav-item.active { background: rgba(20, 83, 45, 0.08); color: var(--text-main); font-weight: 600; }
-        .nav-item.active::before {
-            content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-            height: 16px; width: 3px; background-color: var(--accent); border-radius: 0 2px 2px 0;
-        }
-        .nav-item.nav-locked svg { opacity: 0.5; }
-
-        .main-content {
-            flex: 1; position: relative; overflow-y: auto; background: var(--bg-main); scroll-behavior: smooth;
-        }
-
-        .top-bar {
-            position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center;
-            padding: 20px 30px; background: var(--glass); backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); z-index: 40;
-        }
-
-        .page-title-group h1 { font-size: 1.1rem; font-weight: 700; color: var(--text-main); }
-        .page-title-group span { font-size: 0.8rem; color: var(--text-secondary); }
-
-        .btn-logout {
-            background: transparent; border: 1px solid var(--border); color: var(--text-secondary);
-            padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; cursor: pointer;
-            transition: all var(--transition-fast); display: flex; align-items: center; gap: 6px;
-        }
-        .btn-logout:hover { border-color: var(--text-secondary); color: var(--text-main); background: #fff; }
-
-        .content-container { padding: 40px 30px 100px 30px; max-width: 1200px; margin: 0 auto; }
-
-        .hero-section { margin-bottom: 40px; }
-        .hero-title {
-            font-size: 2.5rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.8px;
-            background: linear-gradient(180deg, #0F172A 0%, #475569 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .hero-desc { color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; line-height: 1.6; }
+        .gate-title { font-size: 24px; font-weight: 700; margin-bottom: 16px; color: var(--text-main); }
+        .gate-text { color: var(--text-secondary); margin-bottom: 32px; font-size: 16px; line-height: 1.6; }
         
-        .badge-status {
-            display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
-            background: #F1F5F9; border: 1px solid var(--border); border-radius: 4px;
-            font-size: 0.75rem; color: var(--text-main); margin-top: 16px;
-            text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
+        .gate-input {
+            width: 100%; padding: 14px 16px; border: 1px solid var(--border-light);
+            border-radius: var(--radius-md); font-size: 15px; margin-bottom: 16px;
+            font-family: inherit; outline: none; transition: border-color 0.2s;
+            background: var(--bg-body);
         }
-        .dot { width: 6px; height: 6px; background: var(--accent-glow); border-radius: 50%; display: inline-block; }
-        .dot.free { background: #94A3B8; }
-        .dot.red { background: var(--danger); }
-        .dot.purple { background: var(--accent-pro); box-shadow: 0 0 10px rgba(124, 58, 237, 0.4); }
+        .gate-input:focus { border-color: var(--primary); background: white; }
 
-        /* GRID CARDS & GENERIC */
-        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .card {
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-            padding: 24px; cursor: pointer; transition: all var(--transition-fast);
-            position: relative; overflow: hidden; display: flex; flex-direction: column;
-            justify-content: space-between; min-height: 140px; box-shadow: var(--shadow-card);
-        }
-        .card:not(.is-locked):hover { transform: translateY(-4px); border-color: var(--border-highlight); background: var(--bg-card-hover); }
-        .card-title { font-size: 1.1rem; font-weight: 600; color: var(--text-main); margin-bottom: 8px; }
-        .card-icon { align-self: flex-start; margin-bottom: 16px; color: var(--text-secondary); opacity: 0.7; }
-        .card:not(.is-locked):hover .card-icon { color: var(--accent); opacity: 1; }
-        .card-arrow {
-            position: absolute; bottom: 24px; right: 24px; opacity: 0; transform: translateX(-10px);
-            transition: all var(--transition-fast); color: var(--text-secondary);
-        }
-        .card:not(.is-locked):hover .card-arrow { opacity: 1; transform: translateX(0); }
+        .gate-btn { width: 100%; margin-bottom: 12px; }
+        .gate-btn-secondary { background: white; color: var(--text-main); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); }
+        .gate-btn-secondary:hover { border-color: var(--text-secondary); transform: translateY(-1px); }
 
-        /* Highlight for the active free tool */
-        .card.active-tool {
-            border: 1px solid var(--accent);
-            background: #F0FDF4;
+        .gate-separator {
+            margin: 20px 0; font-size: 12px; color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: 1px; position: relative;
         }
-        .card.active-tool .card-icon { color: var(--accent); opacity: 1; }
-        .card.active-tool .card-arrow { opacity: 1; transform: translateX(0); }
+        .gate-separator::before, .gate-separator::after {
+            content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: var(--border-light);
+        }
+        .gate-separator::before { left: 0; }
+        .gate-separator::after { right: 0; }
 
-        /* --- DASHBOARD WIDGETS (NEW HOME) --- */
-        .pro-hero {
-            position: relative;
-            padding: 30px;
-            background: linear-gradient(135deg, #F8FAFC 0%, #F3E8FF 100%);
-            border: 1px solid #E9D5FF;
-            border-radius: 12px;
-            margin-bottom: 40px;
-        }
+        /* --- EXISTING LAYOUT --- */
+        .app-shell { display: flex; min-height: 100vh; }
         
-        .pro-badge {
-            background: var(--accent-pro); color: #fff; display: inline-block;
-            font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
-            padding: 4px 10px; border-radius: 20px; margin-bottom: 12px; letter-spacing: 1px;
-        }
-        
-        .pro-actions { display: flex; gap: 15px; margin-top: 25px; flex-wrap: wrap; }
-        
-        .btn-pro {
-            background: var(--accent-pro); color: #fff; text-decoration: none;
-            padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 0.9rem;
-            transition: all 0.2s; border: none; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
-        }
-        .btn-pro:hover { background: var(--accent-pro-dark); transform: translateY(-2px); }
-        
-        .btn-outline {
-            background: transparent; color: var(--text-main); text-decoration: none;
-            padding: 11px 23px; border-radius: 6px; font-weight: 600; font-size: 0.9rem;
-            transition: all 0.2s; border: 1px solid var(--border-highlight);
-        }
-        .btn-outline:hover { border-color: var(--text-main); background: #fff; }
+        /* Sidebar */
+        .sidebar { width: var(--nav-width); background: var(--bg-card); border-right: 1px solid var(--border-light); display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; left: 0; z-index: 50; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .sidebar-header { height: var(--header-height); display: flex; align-items: center; padding: 0 32px; }
+        .logo { font-weight: 700; font-size: 24px; color: var(--text-main); display: flex; align-items: center; gap: 12px; letter-spacing: -0.5px; text-decoration: none; }
+        .logo svg { color: var(--primary); width: 32px; height: 32px; }
+        .nav-menu { flex: 1; padding: 32px 16px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--radius-md); color: var(--text-secondary); text-decoration: none; font-weight: 500; transition: all 0.2s ease; cursor: pointer; }
+        .nav-item:hover { background-color: var(--bg-body); color: var(--primary); }
+        .nav-item.active { background-color: var(--primary-light); color: var(--primary); }
+        .nav-item svg { width: 20px; height: 20px; stroke-width: 2px; }
+        .sidebar-footer { padding: 24px; border-top: 1px solid var(--border-light); }
 
-        /* Widget: Chart Bars */
-        .stat-card { justify-content: flex-start; min-height: 220px; }
-        .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .stat-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+        /* Main Content */
+        .main-content { flex: 1; margin-left: var(--nav-width); display: flex; flex-direction: column; min-height: 100vh; width: calc(100% - var(--nav-width)); }
         
-        .tax-row { display: flex; align-items: center; margin-bottom: 12px; font-size: 0.9rem; }
-        .tax-country { width: 80px; font-weight: 500; }
-        .tax-track { flex: 1; height: 24px; background: #F1F5F9; border-radius: 4px; overflow: hidden; position: relative; margin: 0 10px; }
-        .tax-bar { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 0.75rem; color: #fff; font-weight: 600; width: 0; animation: growBar 1.5s ease-out forwards; }
-        .tax-val { width: 40px; text-align: right; font-weight: 700; font-size: 0.9rem; }
+        /* Topbar */
+        .topbar { height: var(--header-height); background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; position: sticky; top: 0; z-index: 40; transition: all 0.3s ease; }
+        .page-title { font-size: 20px; font-weight: 600; color: var(--text-main); }
+        .topbar-actions { display: flex; align-items: center; gap: 16px; }
         
-        .bar-red { background: var(--danger); }
-        .bar-green { background: var(--accent); }
-        .bar-violet { background: var(--accent-pro); }
+        /* User Menu */
+        .user-menu-wrapper { position: relative; }
+        .user-pill { display: flex; align-items: center; gap: 10px; background: var(--bg-card); border: 1px solid var(--border-light); padding: 6px 16px 6px 6px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.2s ease; user-select: none; }
+        .user-pill:hover { border-color: var(--primary); box-shadow: var(--shadow-sm); }
+        .avatar { width: 32px; height: 32px; background: var(--primary-light); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; text-transform: uppercase; }
+        .user-name { font-size: 14px; font-weight: 500; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-dropdown { position: absolute; top: 100%; right: 0; margin-top: 8px; background: white; border: 1px solid var(--border-light); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); width: 200px; display: none; overflow: hidden; animation: fadeIn 0.2s ease; }
+        .user-dropdown.show { display: block; }
+        .dropdown-item { padding: 12px 16px; font-size: 14px; color: var(--text-secondary); cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 8px; }
+        .dropdown-item:hover { background: var(--bg-body); color: var(--danger); }
         
-        @keyframes growBar { from { width: 0; } to { width: var(--w); } }
+        .menu-toggle { display: none; background: none; border: none; cursor: pointer; color: var(--text-main); padding: 8px; }
 
-        /* Widget: Risks */
-        .risk-item { margin-bottom: 15px; }
-        .risk-head { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem; font-weight: 500; }
-        .risk-bar-bg { height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden; }
-        .risk-bar-fill { height: 100%; background: #000; border-radius: 3px; }
+        /* Content Area */
+        .content-area { padding: 40px; flex: 1; max-width: 1280px; width: 100%; margin: 0 auto; }
+        .view-section { display: none; animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Widget: Book */
-        .book-widget {
-            background: #1e1e1e; color: #fff; border: 1px solid #333;
-            display: flex; flex-direction: row; align-items: center;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        /* FIX: FORCE DARK BACKGROUND ON HOVER FOR BOOK WIDGET */
-        .book-widget:hover {
-            background: #111 !important; /* Keep it dark */
-            border-color: var(--text-main) !important;
-            transform: translateY(-4px);
-        }
-        .book-info { flex: 1; z-index: 2; }
-        .book-visual { 
-            width: 60px; height: 80px; background: #fff; margin-left: 15px; 
-            box-shadow: -2px 2px 10px rgba(255,255,255,0.1); border-radius: 2px;
-            position: relative;
-        }
-        .book-visual::before { content:''; position:absolute; left:4px; top:0; bottom:0; width:1px; background:#ddd; }
-
-        /* Widget: Calendar */
-        .cal-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--bg-card-hover); }
-        .cal-item:last-child { border-bottom: none; }
-        .cal-date { 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: #F8FAFC; border: 1px solid var(--border); border-radius: 8px; width: 45px; height: 45px;
-            font-size: 0.75rem; color: var(--text-secondary); font-weight: 700;
-        }
-        .cal-date span { font-size: 1rem; color: var(--text-main); }
-        .cal-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-        .cal-title { font-size: 0.9rem; font-weight: 600; color: var(--text-main); }
-        .cal-sub { font-size: 0.75rem; color: var(--text-secondary); }
-
-        /* --- POPUP MARKETING --- */
-        #popup-promo {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
-            z-index: 2000; display: flex; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s;
-        }
-        #popup-promo.active { opacity: 1; pointer-events: all; }
+        /* TOOLS GRID SYSTEM */
+        .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; margin-top: 24px; margin-bottom: 56px; }
+        .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light); }
+        .section-title { font-size: 18px; font-weight: 600; color: var(--text-main); text-transform: uppercase; letter-spacing: 1px; }
+        .section-icon { color: var(--primary); width: 24px; height: 24px; }
         
-        .popup-content {
-            background: #fff; width: 90%; max-width: 450px; padding: 40px;
-            border-radius: 16px; text-align: center; position: relative;
-            transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        #popup-promo.active .popup-content { transform: scale(1); }
+        /* Updated Tool Card for Locked Items */
+        .tool-card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 24px; transition: all 0.3s ease; text-decoration: none; display: flex; flex-direction: column; height: 100%; position: relative; overflow: hidden; cursor: pointer; }
+        .tool-card:not(.locked):hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--primary-light); }
+        .tool-card:not(.locked):hover .tool-icon { transform: scale(1.1) rotate(3deg); }
+        .tool-card:not(.locked):hover .tool-icon svg { stroke-width: 2.5px; }
         
-        .popup-close {
-            position: absolute; top: 15px; right: 15px; background: none; border: none;
-            font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);
-        }
-        .popup-icon {
-            width: 60px; height: 60px; background: #F3E8FF; border-radius: 50%;
-            color: var(--accent-pro); display: flex; justify-content: center; align-items: center;
-            margin: 0 auto 20px auto;
-        }
-
-        /* --- FORMATION SPECIFIC STYLES --- */
-        .f-meta { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px; display: flex; gap: 10px; align-items: center;}
-        .f-tag-pill {
-            background: #F1F5F9; color: #475569; padding: 4px 10px; border-radius: 20px;
-            font-size: 0.75rem; font-weight: 500;
-        }
-        .f-duration { display: flex; align-items: center; gap: 4px; }
+        .tool-card.locked { opacity: 0.7; grayscale: 0.3; cursor: not-allowed; background-color: #F9FAFB; }
+        .tool-card.locked:hover { background-color: #F3F4F6; }
         
-        .search-container { margin-bottom: 30px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .search-input {
-            flex: 1; min-width: 250px; background: var(--bg-card); border: 1px solid var(--border);
-            padding: 14px 20px; border-radius: 10px; color: var(--text-main); font-size: 1rem;
-            box-shadow: var(--shadow-card); padding-left: 48px;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: 16px center;
-        }
-        .filter-tag {
-            border: 1px solid var(--border); background: var(--bg-card); color: var(--text-secondary);
-            padding: 0 16px; border-radius: 20px; height: 48px; cursor: pointer; transition: all 0.2s; font-size: 0.9rem;
-        }
-        .filter-tag:hover, .filter-tag.active { border-color: var(--accent); color: var(--accent); background: #F0FDF4; }
+        .tool-icon { width: 48px; height: 48px; background: var(--primary-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--primary); margin-bottom: 20px; transition: transform 0.3s ease; }
+        .tool-card.locked .tool-icon { background: #E5E7EB; color: #6B7280; }
+        
+        .tool-title { font-size: 18px; font-weight: 600; color: var(--text-main); margin-bottom: 8px; line-height: 1.3; }
+        .tool-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 24px; flex-grow: 1; }
+        .tool-action { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--primary); margin-top: auto; }
+        .tool-card.locked .tool-action { color: #6B7280; }
+        .tool-action svg { transition: transform 0.2s ease; width: 16px; height: 16px; }
+        .tool-card:not(.locked):hover .tool-action svg { transform: translateX(4px); }
 
-        .bottom-nav {
-            display: none; position: fixed; bottom: 0; left: 0; width: 100%;
-            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            border-top: 1px solid var(--border); padding: 10px 20px; justify-content: space-between; z-index: 100;
-        }
-        .b-nav-item {
-            display: flex; flex-direction: column; align-items: center; gap: 4px; color: #94A3B8;
-            text-decoration: none; font-size: 0.65rem; background: none; border: none; cursor: pointer; transition: color 0.3s;
-        }
-        .b-nav-item svg { width: 22px; height: 22px; stroke: currentColor; }
-        .b-nav-item.active { color: var(--accent); font-weight: 600; }
-        .b-nav-item.active svg { stroke: var(--accent); }
-        .b-nav-item.nav-locked { opacity: 0.4; }
+        /* PRO Badge */
+        .tag-pro { position: absolute; top: 20px; right: 20px; font-size: 10px; font-weight: 800; background: var(--primary-light); color: var(--primary); padding: 4px 8px; border-radius: 6px; letter-spacing: 0.5px; border: 1px solid rgba(124, 58, 237, 0.2); }
+        .tool-card.locked .tag-pro { background: #E5E7EB; color: #6B7280; border-color: #D1D5DB; }
 
-        @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .bottom-nav { display: flex; }
-            .content-container { padding: 20px 20px 100px 20px; }
-            .top-bar { padding: 15px 20px; }
-            .hero-title { font-size: 1.8rem; }
-            .cards-grid { grid-template-columns: 1fr; }
-            .btn-logout span { display: none; }
-            .pro-actions { width: 100%; flex-direction: column; gap: 10px; }
-            .btn-pro, .btn-outline { width: 100%; text-align: center; }
+        /* DASHBOARD LAUNCHER STYLE */
+        .launcher-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; margin-bottom: 40px; }
+        .launcher-card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 32px; transition: all 0.3s ease; display: flex; flex-direction: column; justify-content: center; min-height: 220px; position: relative; overflow: hidden; text-decoration: none; cursor: pointer; }
+        .launcher-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); border-color: var(--primary); }
+        .launcher-icon { width: 64px; height: 64px; background: var(--primary-light); color: var(--primary); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
+        .launcher-icon svg { width: 32px; height: 32px; stroke-width: 2; }
+        .launcher-title { font-size: 24px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+        .launcher-desc { font-size: 16px; color: var(--text-secondary); max-width: 80%; line-height: 1.5; }
+        .launcher-arrow { position: absolute; bottom: 32px; right: 32px; width: 40px; height: 40px; border-radius: 50%; background: var(--bg-body); color: var(--text-main); display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; }
+        .launcher-card:hover .launcher-arrow { background: var(--primary); color: white; transform: translateX(5px); }
+
+        .info-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 32px; }
+        
+        .fun-fact-card { background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%); color: white; padding: 40px; border-radius: var(--radius-lg); position: relative; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.4); display: flex; flex-direction: column; justify-content: center; }
+        .fun-fact-card::before { content: '"'; position: absolute; top: 10px; right: 20px; font-size: 140px; font-family: serif; opacity: 0.1; line-height: 1; }
+        .fact-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 16px; display: block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; width: fit-content; backdrop-filter: blur(4px); }
+        .fact-content { font-size: 24px; font-weight: 600; line-height: 1.4; max-width: 90%; margin-bottom: 24px; }
+        
+        .pro-tip-card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 32px; display: flex; flex-direction: column; justify-content: space-between; }
+        .tip-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .tip-icon { color: var(--warning); }
+        .tip-title { font-weight: 600; font-size: 18px; }
+        .tip-content { color: var(--text-secondary); font-size: 15px; line-height: 1.6; }
+
+        /* FREE BANNER STYLE */
+        .free-banner { background: linear-gradient(90deg, #111827 0%, #374151 100%); color: white; padding: 16px 24px; border-radius: var(--radius-md); margin-bottom: 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow-md); }
+        .free-banner-text { display: flex; align-items: center; gap: 12px; font-weight: 500; }
+        .free-banner-icon { color: #F59E0B; }
+
+        /* CHAT UI */
+        .chat-container { display: flex; flex-direction: column; height: calc(100vh - 200px); background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-light); overflow: hidden; box-shadow: var(--shadow-sm); }
+        .chat-messages { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+        .message { display: flex; align-items: flex-start; gap: 12px; max-width: 80%; animation: fadeIn 0.3s ease; }
+        .message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .message-bubble { padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.5; position: relative; }
+        .message.bot .message-bubble { background: var(--bg-body); color: var(--text-main); border-bottom-left-radius: 4px; border: 1px solid var(--border-light); }
+        .message.user .message-bubble { background: var(--primary); color: white; border-bottom-right-radius: 4px; box-shadow: 0 2px 8px rgba(124, 58, 237, 0.2); }
+        .chat-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .message.user .chat-avatar { background: #E5E7EB; color: #374151; }
+        .chat-input-area { padding: 20px; border-top: 1px solid var(--border-light); background: white; display: flex; gap: 12px; align-items: center; }
+        .chat-input { flex: 1; padding: 14px 16px; border-radius: var(--radius-pill); border: 1px solid var(--border-light); font-family: inherit; font-size: 15px; outline: none; transition: border-color 0.2s; }
+        .chat-input:focus { border-color: var(--primary); }
+        .send-btn { width: 48px; height: 48px; border-radius: 50%; background: var(--primary); color: white; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s; }
+        .send-btn:hover { transform: scale(1.05); background: var(--primary-hover); }
+        .typing-indicator { font-size: 12px; color: var(--text-secondary); margin-left: 56px; margin-top: -10px; margin-bottom: 10px; display: none; font-style: italic; }
+
+        /* CONTACT CARDS */
+        .contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 32px; }
+        .contact-card { background: white; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 32px; text-align: center; transition: transform 0.2s; }
+        .contact-card:hover { transform: translateY(-4px); border-color: var(--primary-light); box-shadow: var(--shadow-md); }
+        .contact-icon { width: 64px; height: 64px; background: var(--primary-light); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+        .contact-value { font-size: 18px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; display: block; }
+        .contact-label { color: var(--text-secondary); font-size: 14px; }
+
+        /* MODAL */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; backdrop-filter: blur(2px); }
+        .modal-overlay.open { display: flex; opacity: 1; }
+        .modal-content { background: white; width: 100%; max-width: 500px; border-radius: var(--radius-lg); padding: 32px; position: relative; transform: translateY(20px); transition: transform 0.3s ease; box-shadow: var(--shadow-lg); }
+        .modal-overlay.open .modal-content { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-title { font-size: 20px; font-weight: 700; }
+        .close-modal { background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer; }
+        .msg-template { background: var(--bg-body); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px; cursor: pointer; transition: all 0.2s; position: relative; }
+        .msg-template:hover { border-color: var(--primary); background: white; }
+        .msg-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; color: var(--text-main); }
+        .msg-body { font-size: 13px; color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .copy-hint { font-size: 10px; color: var(--primary); font-weight: 700; position: absolute; top: 16px; right: 16px; opacity: 0; transition: opacity 0.2s; }
+        .msg-template:hover .copy-hint { opacity: 1; }
+
+        /* Construction State */
+        .construction-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px 24px; background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); min-height: 500px; transition: all 0.3s ease; }
+        .construction-state:hover { box-shadow: var(--shadow-md); }
+        .construction-icon-wrapper { width: 96px; height: 96px; background: var(--primary-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 32px; color: var(--primary); position: relative; }
+        .construction-icon-wrapper::after { content: ''; position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px; border-radius: 50%; border: 1px solid var(--primary); opacity: 0.2; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.2; } 50% { transform: scale(1.05); opacity: 0.1; } 100% { transform: scale(1); opacity: 0.2; } }
+        .construction-icon-wrapper svg { width: 48px; height: 48px; stroke-width: 1.5; }
+        .construction-title { font-size: 28px; font-weight: 700; margin-bottom: 16px; color: var(--text-main); letter-spacing: -0.5px; }
+        .construction-text { color: var(--text-secondary); max-width: 480px; margin-bottom: 40px; font-size: 16px; line-height: 1.6; }
+
+        /* Components */
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 14px 32px; border-radius: var(--radius-pill); font-weight: 600; font-size: 15px; transition: all 0.2s ease; cursor: pointer; border: none; gap: 10px; }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25); }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35); }
+        .btn-primary:active { transform: translateY(0); }
+        .tag-beta { font-size: 10px; font-weight: 700; background: var(--primary); color: white; padding: 3px 8px; border-radius: 6px; margin-left: auto; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Overlay */
+        .fiscor-ai-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.98); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; backdrop-filter: blur(5px); }
+        .fiscor-ai-overlay.active { opacity: 1; pointer-events: all; }
+        .ai-loader { width: 72px; height: 72px; border: 4px solid var(--primary-light); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 32px; }
+        .ai-status-text { font-size: 20px; font-weight: 600; color: var(--text-main); letter-spacing: -0.5px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Mobile */
+        @media (max-width: 1024px) {
+            .sidebar { transform: translateX(-100%); box-shadow: var(--shadow-lg); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; width: 100%; }
+            .menu-toggle { display: block; }
+            .topbar { padding: 0 20px; }
+            .content-area { padding: 24px; }
+            .tools-grid { grid-template-columns: 1fr; }
+            .launcher-grid { grid-template-columns: 1fr; }
+            .info-grid { grid-template-columns: 1fr; }
         }
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 45; opacity: 0; transition: opacity 0.3s; }
+        .sidebar.open + .sidebar-overlay { display: block; opacity: 1; }
     </style>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body>
 
-    <!-- 1. LOCK SCREEN (FREE ACCESS) -->
-    <div id="view-lock">
-        <div class="lock-container slide-up">
-            <div class="brand-logo">FISCOR</div>
-            <div class="brand-sub">BOUCLIER FISCAL</div>
-            
-            <button id="btn-login" class="btn-access">Accéder à l'interface</button>
-            <div class="free-notice">Version Découverte - Accès Limité</div>
+    <!-- SPLASH SCREEN -->
+    <div id="splash-screen">
+        <div class="liquid-container">
+            <h1 class="liquid-text" data-text="FISCOR APP">FISCOR APP</h1>
         </div>
     </div>
 
-    <!-- 2. LOADING SCREEN -->
-    <div id="view-loading" class="hidden">
-        <div class="loader-ring"></div>
-        <div class="loader-text">INITIALISATION MODE GRATUIT...</div>
+    <!-- PREMIUM GATE / LOGIN -->
+    <div id="premium-gate">
+        <div class="gate-card" id="gate-login-card">
+            <h2 class="gate-title">Bienvenue sur Fiscor</h2>
+            <p class="gate-text">Connectez-vous pour accéder à votre espace de gestion et formation (Version Gratuite).</p>
+            
+            <!-- Email Login -->
+            <input type="email" id="email-input" class="gate-input" placeholder="Adresse email">
+            <input type="password" id="password-input" class="gate-input" placeholder="Mot de passe">
+            <button id="btn-login-email" class="btn btn-primary gate-btn" type="button">Accéder à l'espace</button>
+
+            <div class="gate-separator">OU</div>
+
+            <!-- Google Login -->
+            <button id="btn-login-google" class="btn gate-btn-secondary gate-btn" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                Connexion avec Google
+            </button>
+        </div>
+
+        <div class="gate-card" id="gate-error-card" style="display:none;">
+            <div style="font-size:48px; margin-bottom:16px;">👋</div>
+            <h2 class="gate-title">Bienvenue !</h2>
+            <p class="gate-text">Vous êtes bien connecté. Chargement de l'interface gratuite...</p>
+            <button onclick="location.reload()" class="btn btn-primary gate-btn">Accéder</button>
+            <button id="btn-logout-error" class="btn gate-btn-secondary gate-btn" style="border-color: transparent; background: #F3F4F6;">Se déconnecter</button>
+        </div>
     </div>
 
-    <!-- 3. APP VIEW -->
-    <div id="view-app" class="hidden">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="brand-logo" style="font-size: 1.5rem;">FISCOR</div>
-                <div class="brand-sub" style="margin-bottom:0;">VERSION GRATUITE</div>
+    <!-- FISCOR AI LOADER -->
+    <div id="fiscor-ai-overlay" class="fiscor-ai-overlay">
+        <div class="ai-loader"></div>
+        <div class="ai-status-text" id="ai-status-text">Fiscor AI analyse votre demande...</div>
+    </div>
+
+    <!-- HELP MODAL -->
+    <div id="help-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Messages prédéfinis</h3>
+                <button class="close-modal" onclick="toggleHelpModal()">×</button>
             </div>
-            <nav class="sidebar-nav" id="desktop-nav"></nav>
+            <p style="margin-bottom: 20px; color: var(--text-secondary); font-size: 14px;">Cliquez sur un message pour le copier, puis envoyez-le par mail ou SMS.</p>
+            
+            <div class="msg-template" onclick="copyToClipboard(this, 'Bonjour, je rencontre un problème technique sur l\'outil [Nom de l\'outil]. Pouvez-vous m\'aider ?')">
+                <div class="copy-hint">COPIER</div>
+                <div class="msg-title">🚨 Problème Technique</div>
+                <div class="msg-body">Bonjour, je rencontre un problème technique sur l'outil...</div>
+            </div>
+
+            <div class="msg-template" onclick="copyToClipboard(this, 'Bonjour, j\'ai une question fiscale concernant ma situation. Voici les détails :')">
+                <div class="copy-hint">COPIER</div>
+                <div class="msg-title">❓ Question Fiscale</div>
+                <div class="msg-body">Bonjour, j'ai une question fiscale concernant ma situation...</div>
+            </div>
+
+            <div class="msg-template" onclick="copyToClipboard(this, 'Bonjour, je souhaiterais suggérer une amélioration pour l\'application :')">
+                <div class="copy-hint">COPIER</div>
+                <div class="msg-title">💡 Suggestion</div>
+                <div class="msg-body">Bonjour, je souhaiterais suggérer une amélioration...</div>
+            </div>
+
+            <div class="msg-template" onclick="copyToClipboard(this, 'Bonjour, je suis intéressé par un partenariat ou une offre entreprise.')">
+                <div class="copy-hint">COPIER</div>
+                <div class="msg-title">🤝 Partenariat</div>
+                <div class="msg-body">Bonjour, je suis intéressé par un partenariat...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-shell">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="#" onclick="navigateTo(event, 'accueil')" class="logo">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    FISCOR
+                </a>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" onclick="navigateTo(event, 'accueil')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    Accueil
+                </a>
+                <a href="#" class="nav-item" onclick="navigateTo(event, 'fiscor-ai')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    Fiscor AI
+                    <span class="tag-beta">BETA</span>
+                </a>
+                <a href="#" class="nav-item" onclick="navigateTo(event, 'formation')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/></svg>
+                    Formation
+                </a>
+                <a href="#" class="nav-item" onclick="navigateTo(event, 'outils')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    Outils
+                </a>
+                <a href="#" class="nav-item" onclick="navigateTo(event, 'templates')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                    Templates
+                </a>
+                <a href="#" class="nav-item" onclick="navigateTo(event, 'aide')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Aide
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn btn-primary" style="width: 100%; border-radius: 12px; font-size: 13px;" onclick="toggleHelpModal()">
+                    Besoin d'aide ?
+                </button>
+            </div>
         </aside>
 
+        <!-- Sidebar Overlay (Mobile) -->
+        <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <!-- MAIN -->
         <main class="main-content">
-            <header class="top-bar">
-                <div class="page-title-group">
-                    <h1 id="header-title">Accueil</h1>
-                    <span id="header-date">Session Invité</span>
+            
+            <!-- TOPBAR -->
+            <header class="topbar">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <button class="menu-toggle" onclick="toggleSidebar()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    </button>
+                    <h1 class="page-title" id="page-title">Accueil</h1>
                 </div>
-                <button class="btn-logout" id="btn-logout">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                    <span>Quitter</span>
-                </button>
+
+                <div class="topbar-actions">
+                    <div class="user-menu-wrapper">
+                        <div class="user-pill" onclick="toggleUserMenu()">
+                            <div class="avatar" id="user-avatar-display">U</div>
+                            <span class="user-name" id="user-name-display">Connexion...</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                        </div>
+                        <div id="user-dropdown" class="user-dropdown">
+                            <div class="dropdown-item" id="btn-logout">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                                Déconnexion
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </header>
-            <div id="content-area" class="content-container"></div>
-        </main>
 
-        <nav class="bottom-nav" id="mobile-nav"></nav>
-    </div>
+            <!-- CONTENT AREA -->
+            <div class="content-area">
 
-    <!-- 4. POPUP MARKETING (PRO) -->
-    <div id="popup-promo">
-        <div class="popup-content">
-            <button class="popup-close" onclick="closePopup()">×</button>
-            <div class="popup-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                <!-- 1. ACCUEIL (DASHBOARD REDESIGNED - GENERIC) -->
+                <section id="view-accueil" class="view-section active">
+                    
+                    <div style="margin-bottom: 40px; text-align: left;">
+                        <h2 style="font-size: 32px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; letter-spacing: -1px;">Bienvenue sur votre espace Fiscor</h2>
+                        
+                        <!-- FREE VERSION BANNER -->
+                        <div class="free-banner">
+                            <div class="free-banner-text">
+                                <svg class="free-banner-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                                <span>Version Gratuite - Passez à PRO pour tout débloquer</span>
+                            </div>
+                            <button class="btn" style="background: white; color: var(--text-main); font-size: 13px; padding: 8px 16px; height: auto;" onclick="alert('Redirection vers la page de paiement...')">Débloquer</button>
+                        </div>
+
+                        <p style="color: var(--text-secondary); font-size: 18px;">Tout ce dont vous avez besoin pour piloter, apprendre et sécuriser votre activité.</p>
+                    </div>
+
+                    <!-- LAUNCHER GRID (Main Navigation) -->
+                    <div class="launcher-grid">
+                        
+                        <!-- CARD 1: OUTILS -->
+                        <div class="launcher-card" onclick="navigateTo(event, 'outils')">
+                            <div class="launcher-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            </div>
+                            <h3 class="launcher-title">Boîte à Outils</h3>
+                            <p class="launcher-desc">Accédez aux simulateurs, générateurs de factures et outils de calcul pour gérer votre quotidien.</p>
+                            <div class="launcher-arrow">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </div>
+                        </div>
+
+                        <!-- CARD 2: FORMATION -->
+                        <div class="launcher-card" onclick="navigateTo(event, 'formation')">
+                            <div class="launcher-icon" style="background: #ECFDF5; color: #10B981;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/></svg>
+                            </div>
+                            <h3 class="launcher-title">Centre de Formation</h3>
+                            <p class="launcher-desc">Maîtrisez la fiscalité étape par étape avec nos modules pédagogiques clairs et sans jargon.</p>
+                            <div class="launcher-arrow">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </div>
+                        </div>
+
+                        <!-- CARD 3: TEMPLATES -->
+                        <div class="launcher-card" onclick="navigateTo(event, 'templates')">
+                            <div class="launcher-icon" style="background: #EFF6FF; color: #3B82F6;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                            </div>
+                            <h3 class="launcher-title">Bibliothèque</h3>
+                            <p class="launcher-desc">Téléchargez des modèles, guides PDF et checklists pour gagner du temps et éviter les erreurs.</p>
+                            <div class="launcher-arrow">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </div>
+                        </div>
+
+                        <!-- CARD 4: AIDE -->
+                        <div class="launcher-card" onclick="navigateTo(event, 'aide')">
+                            <div class="launcher-icon" style="background: #FEF3C7; color: #D97706;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <h3 class="launcher-title">Support Expert</h3>
+                            <p class="launcher-desc">Une question complexe ? Notre équipe est disponible pour vous accompagner personnellement.</p>
+                            <div class="launcher-arrow">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- INFO GRID -->
+                    <div class="info-grid">
+                        
+                        <!-- FEATURE CARD (LE SAVIEZ-VOUS) -->
+                        <div class="fun-fact-card">
+                            <span class="fact-label">Le saviez-vous ?</span>
+                            <p class="fact-content">La France conserve sa place de pays le plus taxé au monde avec un taux de prélèvements obligatoires record de 45,4 % du PIB.</p>
+                            <p style="font-size: 16px; opacity: 0.9; margin-bottom: 24px;">C'est pourquoi optimiser chaque dépense déductible est vital pour votre marge.</p>
+                            <button class="btn btn-white" style="background: white; color: var(--primary); align-self: flex-start; border:none; padding: 12px 28px; font-size:14px; font-weight:600;" onclick="navigateTo(event, 'formation')">
+                                Apprendre à optimiser
+                            </button>
+                        </div>
+
+                        <!-- PRO TIP -->
+                        <div class="pro-tip-card">
+                            <div>
+                                <div class="tip-header">
+                                    <svg class="tip-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 14a1 1 0 1 1 1-1 1 1 0 0 1-1 1zm1-4a1 1 0 0 1-2 0V9a1 1 0 0 1 2 0z"/></svg>
+                                    <span class="tip-title">Conseil Pro</span>
+                                </div>
+                                <p class="tip-content">
+                                    Ne confondez jamais votre Chiffre d'Affaires avec votre Bénéfice. 
+                                    <br><br>
+                                    L'argent sur votre compte pro n'est pas votre salaire. Pensez toujours à provisionner vos charges (URSSAF + Impôts) avant de dépenser.
+                                </p>
+                            </div>
+                            <a href="#" onclick="navigateTo(event, 'outils')" style="color: var(--primary); font-weight: 600; text-decoration: none; font-size: 14px; margin-top: 20px; display: inline-block;">Utiliser le simulateur →</a>
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- 2. FISCOR AI (CHATBOT SIMULÉ) -->
+                <section id="view-fiscor-ai" class="view-section">
+                    <div style="margin-bottom: 20px;">
+                        <h2 style="font-size: 24px; font-weight: 700; color: var(--text-main);">Assistant Intelligent</h2>
+                        <p style="color: var(--text-secondary);">Posez vos questions fiscales complexes à Fiscor AI.</p>
+                    </div>
+
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chat-messages">
+                            <!-- Initial Bot Message -->
+                            <div class="message bot">
+                                <div class="chat-avatar">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M12 22a2 2 0 0 1 2-2v-2a2 2 0 0 1-2-2 2 2 0 0 1-2 2v2a2 2 0 0 1 2 2z"/><path d="M22 12a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2 2 2 0 0 1 2-2h2a2 2 0 0 1 2 2z"/><path d="M2 12a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2 2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><rect x="7" y="7" width="10" height="10" rx="3"/></svg>
+                                </div>
+                                <div class="message-bubble">
+                                    Bonjour. Je suis Fiscor AI. Posez-moi une question sur votre comptabilité ou fiscalité.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="typing-indicator" id="typing-indicator">Fiscor AI est en train d'écrire...</div>
+                        <div class="chat-input-area">
+                            <input type="text" id="chat-input" class="chat-input" placeholder="Posez votre question ici..." onkeypress="handleChatKey(event)">
+                            <button class="send-btn" onclick="sendChatMessage()">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. FORMATION (DYNAMIC RENDER) -->
+                <section id="view-formation" class="view-section">
+                    <div style="margin-bottom: 40px;">
+                        <h2 style="font-size: 28px; font-weight: 700; color: var(--text-main); margin-bottom: 12px; letter-spacing: -0.5px;">Centre de Formation</h2>
+                        <p style="color: var(--text-secondary); max-width: 600px; font-size: 16px;">
+                            Une académie complète pour entrepreneurs : maîtrisez chaque aspect de votre gestion sans jargon complexe.
+                        </p>
+                    </div>
+                    <!-- Content generated by JS -->
+                    <div id="formations-container"></div>
+                </section>
+
+                <!-- 4. OUTILS (DYNAMIC RENDER) -->
+                <section id="view-outils" class="view-section">
+                    <div style="margin-bottom: 40px;">
+                        <h2 style="font-size: 28px; font-weight: 700; color: var(--text-main); margin-bottom: 12px; letter-spacing: -0.5px;">Boîte à Outils</h2>
+                        <p style="color: var(--text-secondary); max-width: 600px; font-size: 16px;">
+                            Une suite complète d'outils intelligents pour simplifier votre gestion, facturer plus vite et sécuriser votre activité.
+                        </p>
+                    </div>
+                    <!-- Content generated by JS -->
+                    <div id="tools-container"></div>
+                </section>
+
+                <!-- 5. TEMPLATES (DYNAMIC RENDER) -->
+                <section id="view-templates" class="view-section">
+                    <div style="margin-bottom: 40px;">
+                        <h2 style="font-size: 28px; font-weight: 700; color: var(--text-main); margin-bottom: 12px; letter-spacing: -0.5px;">Bibliothèque de Documents</h2>
+                        <p style="color: var(--text-secondary); max-width: 600px; font-size: 16px;">
+                            Une collection premium de guides, mémos et modèles prêts à l'emploi.
+                        </p>
+                    </div>
+                    <!-- Content generated by JS -->
+                    <div id="templates-container"></div>
+                </section>
+
+                <!-- 6. AIDE (CONTACT INFOS) -->
+                <section id="view-aide" class="view-section">
+                    <div style="text-align: center; margin-bottom: 40px;">
+                        <h2 class="construction-title">Support Expert</h2>
+                        <p class="construction-text" style="margin: 0 auto;">Notre équipe est disponible pour vous accompagner personnellement.</p>
+                    </div>
+
+                    <div class="contact-grid">
+                        <!-- Phone Card -->
+                        <div class="contact-card">
+                            <div class="contact-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.12 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            </div>
+                            <span class="contact-value">+33 07 44 80 14 99</span>
+                            <span class="contact-label">Ligne directe fondateur</span>
+                            <button class="btn btn-primary" style="margin-top: 24px; width: 100%;" onclick="window.location.href='tel:+33744801499'">Appeler maintenant</button>
+                        </div>
+
+                        <!-- Email Card -->
+                        <div class="contact-card">
+                            <div class="contact-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                            </div>
+                            <span class="contact-value">fiscor@proton.me</span>
+                            <span class="contact-label">Support Email Priority</span>
+                            <button class="btn btn-primary" style="margin-top: 24px; width: 100%;" onclick="window.location.href='mailto:fiscor@proton.me'">Envoyer un email</button>
+                        </div>
+                    </div>
+                </section>
+
             </div>
-            <h2 style="font-size:1.5rem; margin-bottom:10px; color:var(--text-main);">Passez au niveau supérieur</h2>
-            <p style="color:var(--text-secondary); margin-bottom:30px; line-height:1.6;">
-                Vous naviguez depuis 5 minutes. Les vraies stratégies (Montages sociétés, Expatriation, Optimisation TVA) sont réservées aux membres PRO.
-            </p>
-            <a href="https://fiscor.fr" target="_blank" class="btn-pro" style="display:block; width:100%;">Débloquer FISCOR PRO</a>
-        </div>
+        </main>
     </div>
 
     <script>
-        // --- DATA LAYER (Simplified for Free Version) ---
-        // Content stripped but titles kept for "Locked Showcase"
-        const FORMATIONS_DB = [
-            { id: 1, title: "Bénéfice ≠ Cash", duration: "5 min", tags: ["Bases", "Gestion"] },
-            { id: 2, title: "Les 3 caisses", duration: "6 min", tags: ["Bases", "Stratégie"] },
-            { id: 3, title: "TVA : Franchise en base", duration: "4 min", tags: ["TVA", "Micro"] },
-            { id: 4, title: "TVA UE B2B Autoliquidation", duration: "7 min", tags: ["TVA", "International"] },
-            { id: 5, title: "Micro vs Réel", duration: "5 min", tags: ["Statuts", "Stratégie"] },
-            { id: 6, title: "SASU vs EURL", duration: "8 min", tags: ["Statuts", "Juridique"] },
-            { id: 7, title: "Salaire vs Dividendes", duration: "6 min", tags: ["Rémunération", "Optimisation"] },
-            { id: 8, title: "Mentions facture", duration: "4 min", tags: ["Facturation", "Juridique"] },
-            { id: 9, title: "Salariat Déguisé", duration: "7 min", tags: ["URSSAF", "Risque"] },
-            { id: 10, title: "Résidence Fiscale", duration: "9 min", tags: ["Expat", "International"] },
-            { id: 11, title: "Démarrer propre", duration: "6 min", tags: ["Démarrage", "Fondations"] },
-            { id: 12, title: "Choisir Activité", duration: "7 min", tags: ["Démarrage", "Statuts"] },
-            { id: 13, title: "Micro : Constraints", duration: "5 min", tags: ["Micro", "Stratégie"] },
-            { id: 14, title: "Seuils Micro 2024", duration: "5 min", tags: ["Micro", "Chiffres"] },
-            { id: 15, title: "Facturer Propre", duration: "6 min", tags: ["Facturation", "Démarrage"] },
-            { id: 16, title: "Preuves J1", duration: "6 min", tags: ["Contrôle", "Fondations"] },
-            { id: 17, title: "Trop d'impôts ?", duration: "7 min", tags: ["Bases", "Mindset"] },
-            { id: 18, title: "CA / Marge / Bénéfice", duration: "6 min", tags: ["Bases", "Gestion"] },
-            { id: 19, title: "Trésorerie (Survivre)", duration: "8 min", tags: ["Bases", "Gestion"] },
-            { id: 20, title: "Facturer la TVA", duration: "8 min", tags: ["TVA", "Facturation"] },
-            { id: 21, title: "TVA collectée vs déductible", duration: "5 min", tags: ["TVA", "Bases"] },
-            { id: 22, title: "UE B2B : Autoliquidation", duration: "7 min", tags: ["TVA", "International"] },
-            { id: 23, title: "UE B2C : Règles simples", duration: "6 min", tags: ["TVA", "International"] },
-            { id: 24, title: "Hors UE : Règles simples", duration: "6 min", tags: ["TVA", "International"] },
-            { id: 25, title: "Presta Numériques : Pièges", duration: "7 min", tags: ["TVA", "Digital"] },
-            { id: 26, title: "Acompte / Avoir / Solde", duration: "8 min", tags: ["TVA", "Facturation"] },
-            { id: 27, title: "Mentions scénarios", duration: "6 min", tags: ["TVA", "Facturation"] },
-            { id: 28, title: "Top 15 Erreurs (1-8)", duration: "8 min", tags: ["TVA", "Erreurs"] },
-            { id: 29, title: "Top 15 Erreurs (9-15)", duration: "8 min", tags: ["TVA", "Erreurs"] },
-            { id: 30, title: "Mini-Cas Pratiques", duration: "9 min", tags: ["TVA", "Cas"] },
-            { id: 31, title: "Mentions (Récap Terrain)", duration: "6 min", tags: ["Facturation", "Juridique"] },
-            { id: 32, title: "Acomptes (Sécurité)", duration: "6 min", tags: ["Facturation", "Trésorerie"] },
-            { id: 33, title: "Avoirs (Correction)", duration: "5 min", tags: ["Facturation", "Compta"] },
-            { id: 34, title: "Relances & Impayés", duration: "7 min", tags: ["Gestion", "Cash"] },
-            { id: 35, title: "Mise en Demeure", duration: "6 min", tags: ["Juridique", "Recouvrement"] },
-            { id: 36, title: "Contrat Prestation", duration: "8 min", tags: ["Contrats", "Juridique"] },
-            { id: 37, title: "10 Clauses Béton", duration: "9 min", tags: ["Contrats", "Juridique"] },
-            { id: 38, title: "CGV (L'essentiel)", duration: "6 min", tags: ["Juridique"] },
-            { id: 39, title: "Encaissement & Preuves", duration: "6 min", tags: ["Contrôle", "Gestion"] },
-            { id: 40, title: "Banque & KYC", duration: "8 min", tags: ["Banque", "Risque"] },
-            { id: 41, title: "EI Réel : L'oubliée", duration: "6 min", tags: ["Statuts", "Juridique"] },
-            { id: 42, title: "Micro vs Réel : Limites", duration: "7 min", tags: ["Micro", "Stratégie"] },
-            { id: 43, title: "SASU vs EURL : Vérité", duration: "8 min", tags: ["Statuts", "Comparatif"] },
-            { id: 44, title: "IS vs IR", duration: "6 min", tags: ["Fiscalité", "Stratégie"] },
-            { id: 45, title: "Salaire vs Dividendes", duration: "9 min", tags: ["Rémunération", "Optimisation"] },
-            { id: 46, title: "TNS vs Assimilé Salarié", duration: "7 min", tags: ["Statuts", "Social"] },
-            { id: 47, title: "Société : Fausse Bonne Idée ?", duration: "6 min", tags: ["Statuts", "Risque"] },
-            { id: 48, title: "Passer en Société : Timing", duration: "7 min", tags: ["Transition", "Stratégie"] },
-            { id: 49, title: "Rémunération (3 Scénarios)", duration: "8 min", tags: ["Rémunération", "Cas"] },
-            { id: 50, title: "Structurer à 10k/mois", duration: "8 min", tags: ["Croissance", "Organisation"] }
+        // --- DATA SOURCES ---
+
+        const TEMPLATES_DATA = [
+             {
+                category: "Packs de Démarrage",
+                icon: `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>`,
+                items: [
+                    { id: 'pack-micro', title: "Pack Démarrage Micro", desc: "Le kit complet : modèles de devis, factures, livre des recettes et guide Urssaf.", action: "Télécharger Pack", icon: `<circle cx="12" cy="12" r="10"></circle><path d="M8 12h8"></path>` },
+                    { id: 'pack-sas', title: "Pack Démarrage SASU", desc: "Statuts types, PV de nomination, modèle de note de frais et fiche de paie président.", action: "Télécharger Pack", icon: `<circle cx="12" cy="12" r="10"></circle><path d="M12 8v8"></path><path d="M8 12h8"></path>` }
+                ]
+            },
+            {
+                category: "Guides & Mémos PDF",
+                icon: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>`,
+                items: [
+                    { id: 'memo-tva', title: "Mémo TVA 2024", desc: "Une page A4 pour tout savoir : seuils, taux, dates et mentions obligatoires.", action: "Télécharger PDF", icon: `<path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline>` },
+                    { id: 'memo-charges', title: "Liste Charges Déductibles", desc: "La liste exhaustive de ce que vous pouvez passer en frais pro (et ce qui est interdit).", action: "Télécharger PDF", icon: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>` }
+                ]
+            },
+            {
+                category: "Modèles Administratifs",
+                icon: `<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>`,
+                items: [
+                    { id: 'modele-courrier', title: "Modèles de Courriers", desc: "Mise en demeure, demande de remise gracieuse impôts, résiliation de contrat.", action: "Voir modèles", icon: `<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline>` }
+                ]
+            }
         ];
 
-        const DATA_APP = {
-            accueil: {
-                label: "Accueil",
-                icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>`,
-                title: "Tableau de Bord",
-                desc: "Bienvenue sur l'interface gratuite FISCOR. Seuls les outils essentiels sont accessibles.",
-                locked: false
+        const TOOLS_DATA = [
+            {
+                category: "Pilotage & Fiscalité",
+                icon: `<path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/>`,
+                items: [
+                    { id: 'scorefiscal', title: "Score Fiscal Fiscor", desc: "Évaluez votre santé fiscale sur 100 et obtenez un plan d'action personnalisé.", action: "Calculer mon score", icon: `<path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/>` },
+                    { id: 'diagnostic', title: "Diagnostic \"Risques & Pertes\"", desc: "Identifiez les erreurs probables dans votre gestion et estimez vos coûts cachés.", action: "Lancer le diagnostic", icon: `<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>` },
+                    { id: 'radar', title: "Radar Échéances", desc: "Visualisez vos dates clés (URSSAF, TVA, CFE) et activez les rappels automatiques.", action: "Voir mon radar", icon: `<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>` },
+                    { id: 'simulateur', title: "Simulateur Épargne", desc: "Combien mettre de côté ? Calculez vos provisions mensuelles idéales.", action: "Simuler maintenant", icon: `<rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="2" y1="16" x2="22" y2="16"/><line x1="12" y1="10" x2="12" y2="16"/>` },
+                    { id: 'assistant', title: "Assistant \"Priorités\"", desc: "Que faire maintenant ? Une checklist dynamique intelligente pour ne rien oublier.", action: "Voir ma liste", icon: `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>` },
+                    { id: 'analyseur', title: "Analyseur de Situation", desc: "Micro, Réel ou Société ? Obtenez une recommandation de statut sur mesure.", action: "Analyser mon statut", icon: `<circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>` },
+                    { id: 'conformite', title: "Plan de Conformité", desc: "Un parcours guidé étape par étape pour blinder juridiquement votre activité.", action: "Sécuriser mon activité", icon: `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>` },
+                    { id: 'timeline', title: "Timeline Entreprise", desc: "De la création aux bascules de régimes : visualisez votre historique et votre futur.", action: "Voir ma timeline", icon: `<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>` },
+                    { id: 'audit', title: "Audit \"Documents Manquants\"", desc: "La liste ultime des preuves à conserver pour être serein en cas de contrôle.", action: "Vérifier mes documents", icon: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>` }
+                ]
             },
-            formations: {
-                label: "Formations",
-                icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>`,
-                title: "Centre de Formation",
-                desc: "50 modules stratégiques (Verrouillé - Version Premium requise).",
-                locked: false // Accessible to show the locked list
+            {
+                category: "Facturation & Commercial",
+                icon: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>`,
+                items: [
+                    { id: 'facture', title: "Générateur de Facture", desc: "Créez des factures professionnelles et conformes en quelques clics. Export PDF instantané.", action: "Créer une facture", icon: `<path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline>` },
+                    { id: 'devis', title: "Devis → Facture", desc: "Transformez vos devis validés en factures sans ressaisie. Duplication intelligente.", action: "Convertir un devis", icon: `<polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>` },
+                    { id: 'avoir', title: "Avoir / Note de Crédit", desc: "Annulez partiellement ou totalement une facture avec un avoir conforme à la loi.", action: "Créer un avoir", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line>` },
+                    { id: 'acompte', title: "Facture d'Acompte & Solde", desc: "Gérez les paiements échelonnés : acompte initial et facture de clôture liées.", action: "Gérer un acompte", icon: `<path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path>` },
+                    { id: 'export', title: "Facture Export", desc: "Facturez hors France (UE/Hors UE) avec les bonnes mentions de TVA (Art 259/262).", action: "Facturer à l'étranger", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>` },
+                    { id: 'intracom', title: "Facture Intracom", desc: "Gestion spécifique des livraisons intracommunautaires et autoliquidation de TVA.", action: "Facture UE", icon: `<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line>` },
+                    { id: 'relance', title: "Relance Impayé", desc: "Générez des mails et courriers de relance graduels pour être payé plus vite.", action: "Relancer un client", icon: `<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path>` },
+                    { id: 'mise-en-demeure', title: "Mise en Demeure", desc: "L'étape juridique avant contentieux. Modèle formel prêt à l'emploi et certifié.", action: "Générer le courrier", icon: `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>` },
+                    { id: 'registre', title: "Registre des Ventes", desc: "Votre journal chronologique obligatoire, généré automatiquement depuis vos factures.", action: "Voir mon registre", icon: `<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>` },
+                    { id: 'numerotation', title: "Numéroteur Intelligent", desc: "Configurez vos règles de numérotation (préfixes, années) pour une chronologie sans faille.", action: "Configurer", icon: `<line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line>` },
+                    { id: 'mentions', title: "Mentions Légales Builder", desc: "Générez les mentions obligatoires adaptées à votre statut juridique pour vos pieds de page.", action: "Générer mentions", icon: `<path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle>` },
+                    { id: 'produits', title: "Bibliothèque Produits", desc: "Centralisez vos articles, tarifs et taux de TVA pour facturer plus vite sans erreur.", action: "Gérer mon catalogue", icon: `<line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>` },
+                    { id: 'cgv', title: "Générateur de CGV", desc: "Créez vos Conditions Générales de Vente par blocs modulaires selon votre activité.", action: "Créer mes CGV", icon: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M9 15l2 2 4-4"></path>` },
+                    { id: 'signature', title: "Signature de Devis", desc: "Module de signature \"Bon pour accord\" numérique pour vos devis dématérialisés.", action: "Signer un document", icon: `<path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line>` }
+                ]
             },
-            outils: {
-                label: "Outils",
-                icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`,
-                title: "Boîte à Outils",
-                desc: "Utilitaires de gestion. L'outil Facture est disponible gratuitement.",
-                locked: false,
-                items: ["Générateur de Facture", "Générateur de relances", "Simulateur TNS/SASU", "Calculateur TVA", "Checklist Contrôle"]
+            {
+                category: "Gestion de la TVA",
+                icon: `<line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle>`,
+                items: [
+                    { id: 'tva-seuil', title: "Seuil TVA Tracker", desc: "Suivez votre CA glissant et recevez des alertes avant de dépasser les seuils de franchise.", action: "Suivre mes seuils", icon: `<line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line><line x1="4" y1="9" x2="20" y2="9" style="stroke-dasharray: 4; stroke: #EF4444;"></line>` },
+                    { id: 'tva-calc', title: "Calculateur TVA Net", desc: "Saisissez votre TVA collectée et déductible pour connaître le montant exact à payer.", action: "Calculer", icon: `<rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line>` },
+                    { id: 'tva-inverse', title: "Calculateur \"HT vs TTC\"", desc: "Passez du HT au TTC (et inversement) instantanément avec les bons taux.", action: "Convertir", icon: `<polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line>` },
+                    { id: 'tva-declaration', title: "Générateur Déclaration", desc: "Obtenez un résumé prêt à copier-coller pour remplir votre déclaration sur impots.gouv.", action: "Générer", icon: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>` },
+                    { id: 'tva-checklist', title: "Checklist Déclaration", desc: "La liste de contrôle mensuelle/trimestrielle pour ne rien oublier avant de valider.", action: "Vérifier", icon: `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>` },
+                    { id: 'tva-mentions', title: "Mentions \"Sans TVA\"", desc: "Trouvez la mention légale exacte à apposer (Franchise en base, Art 293B, Export, etc.).", action: "Trouver la mention", icon: `<path d="M20 6L9 17l-5-5"></path>` },
+                    { id: 'tva-auto', title: "Autoliquidation UE", desc: "Assistant de saisie pour vos achats de services dans l'UE (Google, Facebook Ads, etc.).", action: "Gérer l'autoliquidation", icon: `<circle cx="12" cy="12" r="10"></circle><path d="M2 12h20"></path><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>` },
+                    { id: 'tva-export', title: "TVA Export Hors UE", desc: "Assistant pour valider les preuves d'exportation et sécuriser vos ventes hors UE.", action: "Sécuriser export", icon: `<path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path>` },
+                    { id: 'tva-ecommerce', title: "TVA E-commerce", desc: "Comprendre les seuils (OSS/IOSS) et la logique de TVA pour la vente en ligne.", action: "Analyser", icon: `<circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>` },
+                    { id: 'tva-tableau', title: "Tableau de Suivi TVA", desc: "Une interface simple type tableur pour lister vos entrées/sorties de TVA.", action: "Ouvrir le tableau", icon: `<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line>` },
+                    { id: 'tva-rattrapage', title: "Rattrapage TVA", desc: "Vous avez oublié de déclarer ? Voici les étapes pour régulariser sans panique.", action: "Régulariser", icon: `<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>` },
+                    { id: 'tva-prix', title: "Simulateur Impact Prix", desc: "Visualisez l'impact du passage à la TVA sur votre marge et vos prix clients.", action: "Simuler impact", icon: `<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line>` }
+                ]
             },
-            templates: {
-                label: "Templates",
-                icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>`,
-                title: "Modèles",
-                desc: "",
-                locked: true
+            {
+                category: "Cotisations & URSSAF",
+                icon: `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>`,
+                items: [
+                    { id: 'urssaf-simul', title: "Simulateur Charges Micro", desc: "Estimez vos cotisations sociales en fonction de votre CA et de votre activité (ACRE incluse).", action: "Calculer charges", icon: `<path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path>` },
+                    { id: 'urssaf-calendar', title: "Calendrier URSSAF", desc: "Vos échéances déclaratives (mensuelles ou trimestrielles) en un coup d'œil.", action: "Voir échéances", icon: `<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>` },
+                    { id: 'urssaf-aide', title: "Aide à la Déclaration", desc: "Guide pas-à-pas pour remplir votre déclaration de chiffre d'affaires sans erreur.", action: "M'aider à déclarer", icon: `<circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line>` },
+                    { id: 'urssaf-provision', title: "Provision URSSAF", desc: "Sachez exactement combien mettre de côté chaque mois pour payer vos charges.", action: "Calculer provisions", icon: `<rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="2" y1="16" x2="22" y2="16"/><line x1="12" y1="10" x2="12" y2="16"/>` },
+                    { id: 'urssaf-regul', title: "Régularisation N+1", desc: "Anticipez le choc de régularisation l'année suivante (pour les régimes réels/TNS).", action: "Anticiper", icon: `<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline>` },
+                    { id: 'urssaf-penalites', title: "Tracker Pénalités", desc: "Estimez le coût d'un retard de déclaration ou de paiement (majorations).", action: "Estimer coût", icon: `<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>` },
+                    { id: 'urssaf-journal', title: "Journal des Déclarations", desc: "Gardez une trace propre de vos dates, montants déclarés et numéros de récépissés.", action: "Voir historique", icon: `<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>` },
+                    { id: 'urssaf-scam', title: "Pack Anti-Scam", desc: "Ne vous faites pas avoir. Exemples de faux courriers URSSAF/RSI et checklist de vérification.", action: "Vérifier courrier", icon: `<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>` }
+                ]
             },
-            cas: {
-                label: "Cas Pratiques",
-                icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>`,
-                title: "Études",
-                desc: "",
-                locked: true
+            {
+                category: "Fiscalité & Impôts",
+                icon: `<rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>`,
+                items: [
+                    { id: 'impot-simul', title: "Simulateur Impôt", desc: "Estimez l'ordre de grandeur de votre impôt sur le revenu à partir de votre bénéfice.", action: "Estimer mon impôt", icon: `<path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>` },
+                    { id: 'bnc-bic', title: "Calculateur BNC vs BIC", desc: "Service ou Achat-revente ? Un questionnaire rapide pour définir votre catégorie fiscale.", action: "Identifier catégorie", icon: `<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>` },
+                    { id: 'charges', title: "Outil Charges Déductibles", desc: "Bibliothèque de frais professionnels avec score de confiance et risque de redressement.", action: "Vérifier une dépense", icon: `<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>` },
+                    { id: 'depense-eval', title: "Évaluateur Dépense", desc: "Puis-je passer ça en frais ? Un système de feu vert/orange/rouge basé sur la jurisprudence.", action: "Scanner ma dépense", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>` },
+                    { id: 'remuneration-simul', title: "Salaire vs Dividendes", desc: "Simulateur pédagogique pour optimiser votre sortie d'argent (SASU/EURL).", action: "Optimiser revenus", icon: `<path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path>` },
+                    { id: 'regime-choice', title: "Choix de Régime", desc: "Micro, Réel ou Société ? Un arbre de décision intelligent pour faire le bon choix.", action: "Comparer régimes", icon: `<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>` },
+                    { id: 'cfe-helper', title: "CFE Helper", desc: "Comprenez la Cotisation Foncière des Entreprises, quand la payer et combien.", action: "Estimer CFE", icon: `<rect x="3" y="21" width="18" height="2" rx="1" ry="1"></rect><path d="M5 21V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v14"></path><path d="M9 10a2 2 0 1 1-4 0v-4h4v4z"></path><path d="M19 10a2 2 0 1 1-4 0v-4h4v4z"></path>` },
+                    { id: 'impot-provision', title: "Provision Impôts", desc: "Mensualisez vous-même votre impôt sur le revenu pour ne jamais être à découvert.", action: "Calculer provisions", icon: `<path d="M19 5c-1.5 0-2.8 0.6-3.8 1.5l-2.5 2.5-3.2-3.2c-0.6-0.6-1.5-1-2.4-0.9C5.7 4.9 4.9 5.6 4.9 7c0 0.9 0.4 1.7 1 2.4l3.2 3.2-2.5 2.5C5.6 16.2 5 17.5 5 19s0.6 2.8 1.5 3.8c0.9 0.9 2.2 1.5 3.8 1.5s2.8-0.6 3.8-1.5l2.5-2.5 3.2 3.2c0.6 0.6 1.5 1 2.4 0.9 1.4-0.1 2.2-0.8 2.2-2.2 0-0.9-0.4-1.7-1-2.4l-3.2-3.2 2.5-2.5C23.4 12.8 24 11.5 24 10s-0.6-2.8-1.5-3.8c-0.9-0.9-2.2-1.5-3.8-1.5zM15.5 6.5l2 2-2 2-2-2 2-2zM8.5 13.5l2 2-2 2-2-2 2-2z"></path>` }
+                ]
             },
-            ligne_rouge: {
-                label: "Ligne Rouge",
-                icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>`,
-                title: "Risque",
-                desc: "",
-                locked: true
+            {
+                category: "Gestion & Comptabilité",
+                icon: `<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line>`,
+                items: [
+                    { id: 'tableur', title: "Mini Tableur Fiscor", desc: "Un tableur simplifié pour vos calculs rapides. Formules basiques et export CSV.", action: "Ouvrir tableur", icon: `<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line>` },
+                    { id: 'budget', title: "Budget Pro", desc: "Planifiez vos entrées et sorties par catégories pour maîtriser votre rentabilité.", action: "Faire mon budget", icon: `<path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"></path><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path>` },
+                    { id: 'treso', title: "Tableau de Trésorerie", desc: "Anticipez vos fins de mois sur 6 mois pour éviter les trous de trésorerie.", action: "Voir prévisions", icon: `<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline>` },
+                    { id: 'journal-achats', title: "Journal des Achats", desc: "Suivez vos dépenses et calculez automatiquement votre TVA déductible.", action: "Lister achats", icon: `<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path>` },
+                    { id: 'suivi-ca', title: "Suivi CA & Objectifs", desc: "Visualisez votre chiffre d'affaires mensuel, cumulé et votre progression vers l'objectif.", action: "Suivre mon CA", icon: `<line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line>` },
+                    { id: 'marge', title: "Suivi de Marge", desc: "Calculez la rentabilité réelle de chaque produit ou service vendu.", action: "Calculer marge", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line>` },
+                    { id: 'import-csv', title: "Import & Nettoyage CSV", desc: "Importez vos relevés bancaires et mappez les colonnes intelligemment.", action: "Importer fichier", icon: `<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line>` },
+                    { id: 'bilan', title: "Export Bilan Simplifié", desc: "Générez un résumé PDF propre de votre année comptable pour votre banquier.", action: "Générer bilan", icon: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>` }
+                ]
             },
-            references: {
-                label: "Références",
-                icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`,
-                title: "Refs",
-                desc: "",
-                locked: true
+            {
+                category: "Vie de la Société & Juridique",
+                icon: `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>`,
+                items: [
+                    { id: 'creation-wizard', title: "Wizard \"Créer une société\"", desc: "L'assistant ultime étape par étape pour immatriculer votre entreprise sans erreur.", action: "Lancer création", icon: `<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>` },
+                    { id: 'statut-compare', title: "Comparateur SASU vs EURL", desc: "Le duel final. Répondez au questionnaire pour savoir quel statut vous convient.", action: "Comparer", icon: `<path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"></path>` },
+                    { id: 'checklist-creation', title: "Checklists de Création", desc: "Ne manquez aucune étape : banque, statuts, annonce légale, dépôt au greffe.", action: "Voir checklist", icon: `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>` },
+                    { id: 'pv-generator', title: "Générateur PV Assemblée", desc: "Créez vos PV de décision d'associé unique (rémunération, approbation comptes) en 1 clic.", action: "Rédiger PV", icon: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>` },
+                    { id: 'attestation-depot', title: "Attestation de Dépôt", desc: "Générez une attestation de dépôt de capital conforme pour votre banque.", action: "Générer", icon: `<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>` },
+                    { id: 'remu-pedago', title: "Outil Rémunération", desc: "Scénarios pédagogiques pour comprendre combien vous pouvez vous verser net.", action: "Simuler salaire", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'dividendes', title: "Outil Dividendes", desc: "Flat tax ou barème progressif ? Calculez ce qui reste dans votre poche.", action: "Simuler dividendes", icon: `<path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>` },
+                    { id: 'micro-to-soc', title: "Passage Micro → Société", desc: "La checklist de transition : ce qui change, ce qui casse et ce qu'il faut préparer.", action: "Préparer transition", icon: `<line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline>` }
+                ]
+            },
+            {
+                category: "International & Export",
+                icon: `<circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>`,
+                items: [
+                    { id: 'facture-inter', title: "Facturation International", desc: "Assistant pour émettre des factures conformes vers l'UE et hors UE.", action: "Facturer export", icon: `<path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path>` },
+                    { id: 'export-preuves', title: "Checklist Preuves Export", desc: "Liste des justificatifs à conserver pour prouver l'exonération de TVA à l'export.", action: "Vérifier preuves", icon: `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>` },
+                    { id: 'mentions-inter', title: "Mentions Légales Multi-pays", desc: "Les phrases magiques à mettre sur vos factures selon le pays du client.", action: "Générer mentions", icon: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>` },
+                    { id: 'devises', title: "Tracker Devises & Marge", desc: "Surveillez l'impact du taux de change (USD/GBP) sur votre marge réelle.", action: "Suivre taux", icon: `<path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>` },
+                    { id: 'guide-intracom', title: "Guide TVA Intracom", desc: "Procédures, Déclaration d'Échanges de Services (DES)... tout pour être en règle.", action: "Consulter guide", icon: `<circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path>` },
+                    { id: 'facture-en', title: "Générateur Facture Anglais", desc: "Invoice Generator : créez une facture parfaite en anglais pour vos clients étrangers.", action: "Create Invoice", icon: `<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line>` },
+                    { id: 'client-etranger', title: "Assistant Client US / UE", desc: "Sélectionnez la zone géographique de votre client pour savoir quelles règles appliquer.", action: "Lancer assistant", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>` }
+                ]
             }
-        };
+        ];
 
-        const STATE = {
-            currentTab: 'accueil',
-            searchQuery: "",
-            filterTag: null
-        };
+        const FORMATIONS_DATA = [
+            {
+                category: "Fondations & Bases",
+                icon: `<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>`,
+                items: [
+                    { id: 'fondation-1', title: "Carte du système fiscal français", desc: "Qui paie quoi, quand, à qui ? Une vue d'ensemble sans jargon.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'fondation-2', title: "Micro-entreprise : les règles pièges", desc: "Plafonds, tolérances, erreurs classiques à éviter absolument.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'fondation-3', title: "Créer son \"setup administratif pro\"", desc: "Dossiers, preuves, process mensuel pour être carré.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'fondation-4', title: "Calendrier fiscal complet", desc: "Année type : URSSAF, TVA, impôts, CFE, toutes les dates.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'fondation-5', title: "Comprendre la TVA en 60 minutes", desc: "Collectée, déductible, franchise, régimes : l'essentiel.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'fondation-6', title: "Lire une facture comme un pro", desc: "Mentions obligatoires, TVA, erreurs fatales à repérer.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'fondation-7', title: "Séparer pro/perso proprement", desc: "Banque, cartes, justificatifs : les règles simples.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'fondation-8', title: "La logique des charges déductibles", desc: "Ce qui passe en frais et ce qui est interdit.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'fondation-9', title: "Contrôle fiscal : la réalité", desc: "Comment ça arrive vraiment : signaux, déclencheurs, erreurs.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'fondation-10', title: "Créer un \"bouclier de preuves\"", desc: "Ce que vous devez garder et comment archiver.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` }
+                ]
+            },
+            {
+                category: "Micro-Entreprise Mastery",
+                icon: `<path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path>`,
+                items: [
+                    { id: 'micro-1', title: "Optimiser une micro sans ligne rouge", desc: "Les leviers d'optimisation propres et légaux.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'micro-2', title: "Micro BIC vs Micro BNC", desc: "Comprendre la différence sans jargon comptable.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'micro-3', title: "Anticiper la sortie micro", desc: "Quand basculer au réel/société et pourquoi.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'micro-4', title: "Piloter ton CA", desc: "Éviter les mauvaises surprises et le dépassement non prévu.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'micro-5', title: "Micro + TVA : le checkpoint", desc: "Gérer les seuils de TVA en micro-entreprise.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'micro-6', title: "Déclaration URSSAF : zéro erreur", desc: "Cas courants et pièges à éviter lors de la déclaration.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'micro-7', title: "Le vrai coût d’une micro", desc: "Calcul complet : charges + impôts + TVA réelle.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'micro-8', title: "Facturation micro impeccable", desc: "Mentions légales, numérotation, règles d'archivage.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'micro-9', title: "Micro & prestations de services", desc: "Pièges spécifiques et bonnes pratiques prestataires.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'micro-10', title: "Micro & e-commerce", desc: "Règles de base et erreurs fréquentes en vente en ligne.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` }
+                ]
+            },
+            {
+                category: "Maîtriser la TVA",
+                icon: `<line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle>`,
+                items: [
+                    { id: 'tva-1', title: "Franchise en base", desc: "Comment facturer sans TVA sans se mettre en danger.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'tva-2', title: "Passage à la TVA", desc: "Plan de transition complet en 7 étapes.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'tva-3', title: "TVA au quotidien", desc: "Process mensuel : collecte, tri, paiement.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'tva-4', title: "TVA déductible", desc: "Maximiser la déduction proprement (preuves, timing).", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'tva-5', title: "TVA sur achats UE (services)", desc: "L'autoliquidation expliquée sans stress.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'tva-6', title: "TVA sur biens UE", desc: "Logique, preuves et cas fréquents d'intracom.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'tva-7', title: "Export hors UE", desc: "TVA 0% et preuves exigées par l'administration.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'tva-8', title: "TVA sur plateformes", desc: "Amazon, Etsy, eBay : logique et points d'attention.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'tva-9', title: "TVA et factures d’acompte", desc: "Gérer l'exigibilité de la TVA sur les acomptes.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'tva-10', title: "TVA et avoirs", desc: "Corriger une facture sans créer d'ennuis comptables.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'tva-11', title: "Erreurs TVA coûteuses", desc: "Mauvais taux, mentions oubliées, déduction abusive.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'tva-12', title: "Choisir le bon régime TVA", desc: "Réel simplifié (acomptes) vs Réel normal (mensuel).", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'tva-13', title: "Rattrapage TVA", desc: "Oubli de déclaration : la procédure exacte.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'tva-14', title: "Provisionner la TVA", desc: "Éviter la 'brique' à payer en fin de mois/trimestre.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'tva-15', title: "Audit TVA interne", desc: "Checklist de contrôle à faire soi-même.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` }
+                ]
+            },
+            {
+                category: "Impôts & Charges",
+                icon: `<rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>`,
+                items: [
+                    { id: 'impot-1', title: "Impôt sur le revenu", desc: "Comprendre ce que tu paies vraiment (sans cours magistral).", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'impot-2', title: "Prélèvement à la source", desc: "Régler ça proprement pour les indépendants.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'impot-3', title: "Bénéfice vs CA", desc: "L'erreur de pilotage qui ruine les entrepreneurs.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'impot-4', title: "Charges déductibles", desc: "Liste 'safe / risque / interdit'.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'impot-5', title: "Dépenses mixtes (pro/perso)", desc: "Règles de répartition propres et exemples.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'impot-6', title: "Amortissements", desc: "L'arme secrète expliquée simplement.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'impot-7', title: "TVA + charges", desc: "Lecture combinée d'une facture.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'impot-8', title: "CFE", desc: "Comprendre la Cotisation Foncière et éviter les surprises.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'impot-9', title: "Acomptes & régularisations", desc: "Pourquoi tu prends des claques fiscales et comment lisser.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'impot-10', title: "Se payer en indépendant", desc: "Stratégie simple sans optimisation agressive.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'impot-11', title: "Construire ton budget fiscal", desc: "Ton outil de pilotage mensuel.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'impot-12', title: "Le plan anti-dettes fiscales", desc: "Méthode de gestion en 30 minutes / mois.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'impot-13', title: "Déductions & crédits utiles", desc: "Les aides réelles selon votre profil.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'impot-14', title: "Optimisation propre", desc: "Les leviers autorisés et ceux à fuir.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'impot-15', title: "Audit annuel perso", desc: "Clôturer proprement sans comptable (version sans société).", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` }
+                ]
+            },
+            {
+                category: "Passage au Réel",
+                icon: `<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line>`,
+                items: [
+                    { id: 'reel-1', title: "Micro → réel : quand et comment", desc: "Stratégie et timing de la bascule.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'reel-2', title: "Régime réel : ce que ça change", desc: "Preuves, suivi, process : la réalité du quotidien.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'reel-3', title: "Organisation au réel", desc: "Tenue du journal, classement des pièces.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'reel-4', title: "TVA au réel : routine béton", desc: "Gérer la TVA dans un régime réel.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'reel-5', title: "Dépenses & justificatifs au réel", desc: "Le niveau d'exigence 'inspection-ready'.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'reel-6', title: "Tableau de trésorerie au réel", desc: "Simple mais puissant pour piloter.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'reel-7', title: "Préparer ses déclarations au réel", desc: "Le workflow pour ne pas stresser.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'reel-8', title: "Éviter les erreurs de débutant", desc: "Les pièges classiques du régime réel.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'reel-9', title: "Réel + international", desc: "Points d'attention spécifiques.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'reel-10', title: "Réel sans expert-comptable", desc: "Est-ce faisable ? Conditions et limites.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` }
+                ]
+            },
+            {
+                category: "Création de Société (SASU/EURL)",
+                icon: `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>`,
+                items: [
+                    { id: 'soc-1', title: "SASU vs EURL : le choix", desc: "Questionnaire mental pour décider selon ton profil.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'soc-2', title: "Créer une SASU", desc: "Les étapes complètes de création.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'soc-3', title: "Créer une EURL", desc: "Les étapes complètes de création.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'soc-4', title: "Banque & dépôt de capital", desc: "Faire simple et rapide.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'soc-5', title: "Statuts : les clauses clés", desc: "L'essentiel sans écrire un roman.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'soc-6', title: "Objet social", desc: "Comment rédiger pour ne pas se bloquer.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'soc-7', title: "Kbis, INPI, formalités", desc: "Le vrai chemin administratif.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'soc-8', title: "TVA en société", desc: "Mise en place et routine.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'soc-9', title: "Se payer en SASU", desc: "Salaire vs dividendes expliqués simplement.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'soc-10', title: "Se payer en EURL", desc: "La logique de rémunération TNS.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'soc-11', title: "Dividendes", desc: "Règles et erreurs fréquentes.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'soc-12', title: "Notes de frais", desc: "Faire propre et éviter les redressements.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'soc-13', title: "Compte courant d’associé", desc: "Un outil puissant à utiliser proprement.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'soc-14', title: "Holding", desc: "Quand ça vaut le coup (et quand non).", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'soc-15', title: "Passage micro → société", desc: "La checklist de bascule complète.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` }
+                ]
+            },
+            {
+                category: "E-commerce & Digital",
+                icon: `<circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>`,
+                items: [
+                    { id: 'ecom-1', title: "Vendre sur Amazon", desc: "Organisation fiscale et vue d'ensemble.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'ecom-2', title: "Etsy/eBay", desc: "Facturation, preuves, TVA (général).", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'ecom-3', title: "Digital products", desc: "TVA & règles générales (UE/hors UE).", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'ecom-4', title: "Dropshipping", desc: "Erreurs fiscales courantes (sans mythes).", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'ecom-5', title: "Paiements en ligne", desc: "Stripe/PayPal/Revolut : classer et justifier.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'ecom-6', title: "Remboursements & litiges", desc: "Gérer la compta et la TVA proprement.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'ecom-7', title: "Abonnements & recurring", desc: "Facturation clean pour les modèles récurrents.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'ecom-8', title: "Archivage e-commerce", desc: "Preuves et durées de conservation.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` }
+                ]
+            },
+            {
+                category: "International & Export",
+                icon: `<circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>`,
+                items: [
+                    { id: 'inter-1', title: "Clients UE", desc: "Facturer proprement : logique générale + preuves.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'inter-2', title: "Clients hors UE", desc: "TVA 0% et justificatifs à fournir.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'inter-3', title: "Prestations à l’étranger", desc: "Règles clés des services internationaux.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'inter-4', title: "Autoliquidation", desc: "Comprendre le mécanisme sans se tromper.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'inter-5', title: "Devises & change", desc: "Sécuriser ta marge face aux taux.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'inter-6', title: "Numéro de TVA intracom", desc: "Quand, comment et erreurs à éviter.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'inter-7', title: "International : le 80/20", desc: "Le protocole simple pour couvrir 80% des cas.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` }
+                ]
+            },
+            {
+                category: "Expatriation & Départ",
+                icon: `<path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path>`,
+                items: [
+                    { id: 'expat-1', title: "Résidence fiscale", desc: "Critères clés et pièges à connaître.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'expat-2', title: "Partir proprement", desc: "Check-list des 60 jours avant départ.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'expat-3', title: "Prouver ton départ", desc: "Les preuves qui comptent vraiment.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'expat-4', title: "Comptes & contrats", desc: "Sécuriser le volet bancaire et contractuel.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'expat-5', title: "Vendre depuis l’étranger", desc: "Organisation clean de l'activité.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'expat-6', title: "Revenir en France", desc: "Erreurs administratives fréquentes au retour.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'expat-7', title: "Expat + société", desc: "Vue d'ensemble des options et limites.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'expat-8', title: "Risque de requalification", desc: "Éviter les signaux d'alerte (pédagogique).", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` }
+                ]
+            },
+            {
+                category: "Contrôle & Litiges",
+                icon: `<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>`,
+                items: [
+                    { id: 'litige-1', title: "Contrôle fiscal", desc: "Kit de réponse : process et documents.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` },
+                    { id: 'litige-2', title: "URSSAF & impayés", desc: "Kit anti-galère : protocole, preuves et modèles.", action: "Voir le module", icon: `<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>` }
+                ]
+            }
+        ];
 
-        // --- CORE FUNCTIONS ---
-
-        function init() {
-            // No auth check needed for free version, but we keep the flow
-            document.getElementById('btn-login').addEventListener('click', enterApp);
-            document.getElementById('btn-logout').addEventListener('click', logout);
-            renderNav();
+        // --- RENDER LOGIC (UPDATED FOR FREE VERSION) ---
+        function renderSection(data, containerId) {
+            const container = document.getElementById(containerId);
+            if(!container) return;
             
-            // Auto Popup after 5 minutes
-            setTimeout(() => {
-                document.getElementById('popup-promo').classList.add('active');
-            }, 300000); // 300,000ms = 5 minutes
-        }
-        
-        function closePopup() {
-            document.getElementById('popup-promo').classList.remove('active');
-        }
+            let html = '';
 
-        function enterApp() {
-            document.getElementById('view-lock').classList.add('fade-out');
-            setTimeout(() => { 
-                document.getElementById('view-lock').classList.add('hidden'); 
-                showLoadingAndApp(); 
-            }, 300);
-        }
-
-        function logout() { 
-            const app = document.getElementById('view-app');
-            const lock = document.getElementById('view-lock');
-
-            // Fade out app
-            app.classList.remove('visible');
-            
-            setTimeout(() => {
-                app.classList.add('hidden');
-                
-                // Show lock screen
-                lock.classList.remove('hidden');
-                // Ensure opacity is reset by removing the fade-out class
-                lock.classList.remove('fade-out'); 
-                
-                // Reset tab state
-                switchTab('accueil');
-            }, 500);
-        }
-        
-        function showLoadingAndApp() {
-            const loading = document.getElementById('view-loading'); loading.classList.remove('hidden');
-            setTimeout(() => { loading.classList.add('hidden'); showApp(true); }, 1500);
-        }
-        function showApp(animate = false) {
-            const app = document.getElementById('view-app');
-            app.classList.remove('hidden');
-            if(animate) setTimeout(() => app.classList.add('visible'), 50); else app.classList.add('visible');
-            switchTab('accueil');
-        }
-
-        // --- NAVIGATION & RENDER ---
-
-        function renderNav() {
-            const deskNav = document.getElementById('desktop-nav');
-            const mobNav = document.getElementById('mobile-nav');
-            deskNav.innerHTML = ''; mobNav.innerHTML = '';
-            
-            Object.keys(DATA_APP).forEach(key => {
-                const item = DATA_APP[key];
-                
-                // Desktop
-                const dLink = document.createElement('div');
-                dLink.className = `nav-item ${key === STATE.currentTab ? 'active' : ''} ${item.locked ? 'nav-locked' : ''}`;
-                dLink.innerHTML = `${item.icon} <span style="margin-left:12px;">${item.label}</span> ${item.locked ? '<svg style="margin-left:auto; width:14px; opacity:0.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>' : ''}`;
-                if(!item.locked) dLink.onclick = () => switchTab(key);
-                deskNav.appendChild(dLink);
-
-                // Mobile
-                const mLink = document.createElement('button');
-                mLink.className = `b-nav-item ${key === STATE.currentTab ? 'active' : ''} ${item.locked ? 'nav-locked' : ''}`;
-                mLink.innerHTML = `${item.icon}<span>${item.label}</span>`;
-                if(!item.locked) mLink.onclick = () => switchTab(key);
-                mobNav.appendChild(mLink);
-            });
-        }
-
-        function switchTab(key) {
-            if (DATA_APP[key].locked) return; // Security check
-
-            STATE.currentTab = key;
-            STATE.searchQuery = "";
-            STATE.filterTag = null;
-            
-            renderNav(); // Re-render to update active state
-
-            const content = document.getElementById('content-area');
-            content.style.opacity = '0'; content.style.transform = 'translateY(10px)';
-            setTimeout(() => {
-                if (key === 'formations') renderFormationsList(container = content);
-                else if (key === 'outils') renderOutils(container = content);
-                else renderDashboard(container = content);
-                
-                content.style.transition = 'all 0.4s ease'; 
-                content.style.opacity = '1'; 
-                content.style.transform = 'translateY(0)';
-            }, 200);
-            
-            // Update Title
-            document.getElementById('header-title').textContent = DATA_APP[key].label.toUpperCase();
-        }
-
-        // --- CONTENT RENDERING ---
-
-        function renderDashboard(container) {
-            // NEW DASHBOARD DESIGN (Pro/Data Viz + Calendar)
-            let html = `
-                <div class="pro-hero fade-in">
-                    <div class="pro-badge">OFFRE LIMITÉE</div>
-                    <h2 class="hero-title" style="font-size: 2rem; margin-bottom:15px;">Passez en <span style="color:var(--accent-pro)">Mode Expert</span></h2>
-                    <p class="hero-desc" style="max-width:700px;">
-                        Vous êtes sur la version découverte. Débloquez les stratégies avancées (Holding, Expatriation), les 50 formations vidéos et tous les simulateurs.
-                    </p>
-                    <div class="pro-actions">
-                        <a href="https://fiscor.fr" target="_blank" class="btn-pro">Débloquer le Plan PRO</a>
-                        <a href="https://fiscor.fr" target="_blank" class="btn-outline">Commander le Livre Physique</a>
+            data.forEach(section => {
+                html += `
+                    <div class="section-header">
+                        <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${section.icon}</svg>
+                        <h3 class="section-title">${section.category}</h3>
                     </div>
-                </div>
-                
-                <div class="cards-grid">
-                    <!-- WIDGET 1: TAX MAP -->
-                    <div class="card stat-card" style="border-top: 3px solid var(--accent-pro);">
-                        <div class="stat-header">
-                            <span class="stat-label">PRESSION FISCALE 2025</span>
-                            <div class="dot purple"></div>
-                        </div>
-                        <h3 class="card-title">France vs Monde</h3>
-                        <div style="margin-top:20px;">
-                            <div class="tax-row">
-                                <span class="tax-country">🇫🇷 FR</span>
-                                <div class="tax-track"><div class="tax-bar bar-red" style="--w: 95%;">60%</div></div>
-                                <span class="tax-val">60%</span>
-                            </div>
-                            <div class="tax-row">
-                                <span class="tax-country">🇪🇪 EST</span>
-                                <div class="tax-track"><div class="tax-bar bar-green" style="--w: 35%;">20%</div></div>
-                                <span class="tax-val">20%</span>
-                            </div>
-                            <div class="tax-row">
-                                <span class="tax-country">🇦🇪 UAE</span>
-                                <div class="tax-track"><div class="tax-bar bar-violet" style="--w: 5%;">0%</div></div>
-                                <span class="tax-val">0%</span>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="tools-grid">
+                `;
 
-                    <!-- WIDGET 2: MICRO RISKS -->
-                    <div class="card stat-card">
-                        <div class="stat-header">
-                            <span class="stat-label">MICRO-ENTREPRISE 2025</span>
-                            <div class="dot red"></div>
-                        </div>
-                        <h3 class="card-title">Zones de Danger</h3>
-                        <div style="margin-top:20px;">
-                            <div class="risk-item">
-                                <div class="risk-head"><span>Seuil TVA</span><span style="color:var(--text-secondary);">39 100 €</span></div>
-                                <div class="risk-bar-bg"><div class="risk-bar-fill" style="width: 40%; background: #94A3B8;"></div></div>
-                            </div>
-                            <div class="risk-item">
-                                <div class="risk-head"><span>Seuil CA (Svc)</span><span style="color:var(--text-secondary);">77 700 €</span></div>
-                                <div class="risk-bar-bg"><div class="risk-bar-fill" style="width: 70%; background: #94A3B8;"></div></div>
-                            </div>
-                            <div class="risk-item">
-                                <div class="risk-head"><span style="color:var(--danger); font-weight:700;">AMENDES TVA</span><span>ILLIMITÉ</span></div>
-                                <div class="risk-bar-bg"><div class="risk-bar-fill" style="width: 100%; background: var(--danger);"></div></div>
-                            </div>
-                        </div>
-                    </div>
+                // Logic: 1st item free (except templates which are all locked)
+                section.items.forEach((item, index) => {
+                    const link = item.link || (item.id.includes('.') ? item.id : item.id + '.html');
+                    
+                    let finalLink = link;
+                    let onclickAttr = '';
+                    let isLocked = false;
 
-                    <!-- WIDGET 3: FISCAL CALENDAR (NEW) -->
-                    <div class="card" style="grid-column: 1 / -1;">
-                        <div class="stat-header">
-                            <span class="stat-label">CALENDRIER FISCAL</span>
-                            <div class="dot free"></div>
-                        </div>
-                         <div style="display:flex; flex-direction:column; gap:0;">
-                            <div class="cal-item">
-                                <div class="cal-date"><span>21</span>OCT</div>
-                                <div class="cal-info">
-                                    <div class="cal-title">Déclaration TVA (Mensuelle)</div>
-                                    <div class="cal-sub">Pour CA réalisé en Septembre.</div>
-                                </div>
-                            </div>
-                            <div class="cal-item">
-                                <div class="cal-date"><span>15</span>DEC</div>
-                                <div class="cal-info">
-                                    <div class="cal-title">Solde CFE 2024</div>
-                                    <div class="cal-sub">À payer sur espace Pro.</div>
-                                </div>
-                            </div>
-                            <div class="cal-item">
-                                <div class="cal-date"><span>31</span>DEC</div>
-                                <div class="cal-info">
-                                    <div class="cal-title">Option Libératoire</div>
-                                    <div class="cal-sub">Date limite pour opter/renoncer.</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    // LOCKING LOGIC
+                    if (containerId === 'templates-container') {
+                        // Templates: 100% locked
+                        isLocked = true;
+                    } else {
+                        // Tools & Formations: Index 0 is free, others locked
+                        if (index > 0) {
+                            isLocked = true;
+                        }
+                    }
 
-                    <!-- WIDGET 4: BOOK PROMO -->
-                    <div class="card book-widget" onclick="window.location.href='https://fiscor.fr'" style="cursor:pointer;">
-                        <div class="book-info">
-                            <div style="font-size:0.7rem; color:#aaa; margin-bottom:5px; text-transform:uppercase; letter-spacing:1px;">Le Manuel</div>
-                            <h3 style="font-size:1.2rem; margin-bottom:8px; color:#fff;">La Bible Fiscale</h3>
-                            <p style="font-size:0.85rem; color:#ccc; line-height:1.4;">200 pages de stratégies pures. L'expertise FISCOR sur votre bureau.</p>
-                            <span style="display:inline-block; margin-top:15px; font-size:0.8rem; border-bottom:1px solid #fff; color:#fff;">Commander ></span>
-                        </div>
-                        <div class="book-visual">
-                            <!-- Visual placeholder for book spine -->
-                            <div style="position:absolute; top:10px; left:10px; right:10px; height:4px; background:#000;"></div>
-                            <div style="position:absolute; bottom:10px; left:0; right:0; text-align:center; font-weight:800; color:#000; font-size:0.6rem; letter-spacing:1px;">FISCOR</div>
-                        </div>
-                    </div>
+                    if (isLocked) {
+                        finalLink = '#';
+                        onclickAttr = `onclick="alert('🔒 Fonctionnalité réservée aux membres PRO.\\n\\nPassez à la version complète pour débloquer tous les outils.'); return false;"`;
+                    }
 
-                     <!-- WIDGET 5: FREE TOOL LINK -->
-                     <div class="card active-tool" onclick="window.location.href='facture.html'">
-                         <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg></div>
-                         <div class="card-title">Générateur Facture</div>
-                         <div style="font-size:0.8rem; color:var(--accent); font-weight:600;">Outil Gratuit</div>
-                         <div class="card-arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>
-                    </div>
+                    let cardClass = isLocked ? 'tool-card locked' : 'tool-card';
+                    let badgeHTML = isLocked ? '<span class="tag-pro">PRO</span>' : '';
 
-                    <!-- WIDGET 6: TEASER COMPARATEUR (LOCKED) -->
-                    <div class="card is-locked">
-                        <div class="lock-icon-overlay"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
-                        <div class="stat-header">
-                            <span class="stat-label">SIMULATEUR REVENU</span>
-                        </div>
-                        <div style="display:flex; justify-content:space-around; align-items:flex-end; height:100px; padding-bottom:10px;">
-                            <div style="width:30px; height:40%; background:#94A3B8; border-radius:4px 4px 0 0;"></div>
-                            <div style="width:30px; height:80%; background:#7C3AED; border-radius:4px 4px 0 0;"></div>
-                        </div>
-                         <div class="card-title" style="text-align:center; font-size:0.9rem;">Salarié vs Freelance</div>
-                    </div>
-                </div>
-            `;
-            container.innerHTML = html;
-        }
-
-        function renderOutils(container) {
-            const data = DATA_APP['outils'];
-            let html = `
-                <div class="hero-section">
-                    <h2 class="hero-title">${data.title}</h2>
-                    <p class="hero-desc">${data.desc}</p>
-                </div>
-                <div class="cards-grid">
-            `;
-            
-            data.items.forEach(item => {
-                const isFree = item === "Générateur de Facture";
-                
-                if (isFree) {
                     html += `
-                        <div class="card active-tool" onclick="window.location.href='facture.html'">
-                            <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg></div>
-                            <div class="card-title">${item}</div>
-                            <div style="font-size:0.8rem; color:var(--accent); font-weight:600;">Accès Gratuit</div>
-                            <div class="card-arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>
-                        </div>
-                    `;
-                } else {
-                    html += `
-                        <div class="card is-locked">
-                            <div class="lock-icon-overlay"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
-                            <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg></div>
-                            <div class="card-title">${item} <span class="premium-badge">PRO</span></div>
-                            <div style="font-size:0.8rem; color:var(--text-secondary);">Non disponible</div>
-                        </div>
-                    `;
-                }
-            });
-            
-            html += `</div>`;
-            container.innerHTML = html;
-        }
-
-        function renderFormationsList(container) {
-            // Extract unique tags
-            const allTags = new Set();
-            FORMATIONS_DB.forEach(f => f.tags.forEach(t => allTags.add(t)));
-
-            let html = `
-                <div class="hero-section">
-                    <h2 class="hero-title">Centre de Formation</h2>
-                    <p class="hero-desc">L'intégralité du programme FISCOR. <br><span style="color:var(--text-secondary); font-size:0.9rem;">(Contenu réservé aux membres Premium)</span></p>
-                </div>
-                
-                <div class="search-container">
-                    <input type="text" id="formation-search" class="search-input" placeholder="Rechercher dans le catalogue..." value="${STATE.searchQuery}">
-                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                        <button class="filter-tag ${STATE.filterTag === null ? 'active' : ''}" onclick="filterFormations(null)">Tous</button>
-                        ${Array.from(allTags).map(tag => `<button class="filter-tag ${STATE.filterTag === tag ? 'active' : ''}" onclick="filterFormations('${tag}')">${tag}</button>`).join('')}
-                    </div>
-                </div>
-                
-                <div class="cards-grid">
-            `;
-
-            const filtered = FORMATIONS_DB.filter(f => {
-                const matchesSearch = f.title.toLowerCase().includes(STATE.searchQuery.toLowerCase());
-                const matchesTag = STATE.filterTag ? f.tags.includes(STATE.filterTag) : true;
-                return matchesSearch && matchesTag;
-            });
-
-            if (filtered.length === 0) {
-                html += `<div style="grid-column:1/-1; text-align:center; color:var(--text-secondary); padding:40px;">Aucun module trouvé.</div>`;
-            } else {
-                filtered.forEach(f => {
-                    html += `
-                        <div class="card is-locked">
-                            <div class="lock-icon-overlay"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
-                            <div>
-                                <div class="f-meta">
-                                    <div class="f-duration"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> ${f.duration}</div>
-                                    ${f.tags.slice(0,2).map(t => `<span class="f-tag-pill">${t}</span>`).join('')}
-                                </div>
-                                <div class="card-title">${f.title}</div>
+                        <a href="${finalLink}" class="${cardClass}" ${onclickAttr}>
+                            ${badgeHTML}
+                            <div class="tool-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${item.icon}</svg>
                             </div>
-                        </div>
+                            <h3 class="tool-title">${item.title}</h3>
+                            <p class="tool-desc">${item.desc}</p>
+                            <div class="tool-action">
+                                ${isLocked ? 'Débloquer' : item.action}
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </div>
+                        </a>
                     `;
                 });
-            }
-            html += `</div>`;
-            container.innerHTML = html;
 
-            document.getElementById('formation-search').addEventListener('input', (e) => {
-                STATE.searchQuery = e.target.value;
-                // Simple re-render logic for this simplified version
-                renderFormationsList(container); 
+                html += `</div>`; // Close grid
+            });
+
+            container.innerHTML = html;
+        }
+
+        // --- NAVIGATION LOGIC (SPA) ---
+        
+        function navigateTo(event, viewId) {
+            if(event) event.preventDefault();
+            
+            const titles = {
+                'accueil': 'Accueil',
+                'fiscor-ai': 'Fiscor AI',
+                'formation': 'Formation',
+                'outils': 'Outils',
+                'templates': 'Templates',
+                'aide': 'Aide'
+            };
+            document.getElementById('page-title').textContent = titles[viewId] || 'Fiscor';
+
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const activeLinks = document.querySelectorAll(`.nav-item[onclick*="'${viewId}'"]`);
+            activeLinks.forEach(link => link.classList.add('active'));
+
+            document.querySelectorAll('.view-section').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            const target = document.getElementById('view-' + viewId);
+            if (target) {
+                target.classList.add('active');
+            }
+
+            if (window.innerWidth <= 1024) {
+                document.getElementById('sidebar').classList.remove('open');
+            }
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        // User Menu Toggle
+        function toggleUserMenu() {
+            document.getElementById('user-dropdown').classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        window.onclick = function(event) {
+            if (!event.target.closest('.user-menu-wrapper')) {
+                const dropdowns = document.getElementsByClassName("user-dropdown");
+                for (let i = 0; i < dropdowns.length; i++) {
+                    const openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+
+        // --- FISCOR AI SIMULATION ---
+        
+        function triggerFakeAI() {
+            const overlay = document.getElementById('fiscor-ai-overlay');
+            const statusText = document.getElementById('ai-status-text');
+            
+            const steps = [
+                "Connexion sécurisée à Fiscor AI...",
+                "Analyse du contexte...",
+                "Traitement de la demande...",
+                "Finalisation..."
+            ];
+
+            overlay.classList.add('active');
+            
+            let stepIndex = 0;
+            statusText.textContent = steps[0]; 
+            
+            const interval = setInterval(() => {
+                stepIndex++;
+                if (stepIndex < steps.length) {
+                    statusText.textContent = steps[stepIndex];
+                } else {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        overlay.classList.remove('active');
+                    }, 600);
+                }
+            }, 800);
+        }
+
+        // --- CHATBOT LOGIC ---
+
+        function handleChatKey(e) {
+            if (e.key === 'Enter') sendChatMessage();
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const chatMessages = document.getElementById('chat-messages');
+            
+            // Add User Message
+            const userMsgHTML = `
+                <div class="message user">
+                    <div class="chat-avatar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </div>
+                    <div class="message-bubble">${message}</div>
+                </div>
+            `;
+            chatMessages.insertAdjacentHTML('beforeend', userMsgHTML);
+            input.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Simulate Typing
+            const typingIndicator = document.getElementById('typing-indicator');
+            typingIndicator.style.display = 'block';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            setTimeout(() => {
+                typingIndicator.style.display = 'none';
+                
+                // Add empty Bot Response Bubble
+                const botMsgID = 'bot-msg-' + Date.now();
+                const botMsgHTML = `
+                    <div class="message bot">
+                        <div class="chat-avatar">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M12 22a2 2 0 0 1 2-2v-2a2 2 0 0 1-2-2 2 2 0 0 1-2 2v2a2 2 0 0 1 2 2z"/><path d="M22 12a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2 2 2 0 0 1 2-2h2a2 2 0 0 1 2 2z"/><path d="M2 12a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2 2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><rect x="7" y="7" width="10" height="10" rx="3"/></svg>
+                        </div>
+                        <div class="message-bubble" id="${botMsgID}"></div>
+                    </div>
+                `;
+                chatMessages.insertAdjacentHTML('beforeend', botMsgHTML);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                // Typewriter Effect
+                const responseText = "Je suis flatté que vous me sollicitiez ! Je suis actuellement en phase d'apprentissage intensif pour devenir le meilleur expert-comptable virtuel. Cette fonctionnalité sera disponible très prochainement. Merci de votre patience.";
+                const bubbleElement = document.getElementById(botMsgID);
+                
+                let i = 0;
+                function typeWriter() {
+                    if (i < responseText.length) {
+                        bubbleElement.innerHTML += responseText.charAt(i);
+                        i++;
+                        chatMessages.scrollTop = chatMessages.scrollHeight; // Keep scrolling
+                        setTimeout(typeWriter, 20); // Speed of typing
+                    }
+                }
+                typeWriter();
+
+            }, 1500);
+        }
+
+        // --- HELP MODAL LOGIC ---
+
+        function toggleHelpModal() {
+            const modal = document.getElementById('help-modal');
+            modal.classList.toggle('open');
+        }
+
+        function copyToClipboard(element, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Visual feedback
+                const originalBg = element.style.backgroundColor;
+                element.style.backgroundColor = '#F3E8FF';
+                element.style.borderColor = '#7C3AED';
+                
+                const hint = element.querySelector('.copy-hint');
+                const originalText = hint.textContent;
+                hint.textContent = 'COPIÉ !';
+                hint.style.opacity = '1';
+
+                setTimeout(() => {
+                    element.style.backgroundColor = originalBg;
+                    element.style.borderColor = '';
+                    hint.textContent = originalText;
+                    hint.style.opacity = '';
+                }, 1500);
             });
         }
 
-        function filterFormations(tag) {
-            STATE.filterTag = tag;
-            const content = document.getElementById('content-area');
-            renderFormationsList(content);
-        }
+        // Close modal when clicking outside
+        document.getElementById('help-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                toggleHelpModal();
+            }
+        });
 
-        window.addEventListener('DOMContentLoaded', init);
+        // INIT UI RENDER
+        renderSection(TOOLS_DATA, 'tools-container');
+        renderSection(FORMATIONS_DATA, 'formations-container');
+        renderSection(TEMPLATES_DATA, 'templates-container');
 
     </script>
-<script type="module" src="/index.tsx"></script>
+
+    <!-- FIREBASE & AUTH LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyCBRfYL47WBzd1RzDfoRxwwBtrOr4wYZeQ",
+          authDomain: "fiscor-90c09.firebaseapp.com",
+          projectId: "fiscor-90c09",
+          storageBucket: "fiscor-90c09.firebasestorage.app",
+          messagingSenderId: "255294631895",
+          appId: "1:255294631895:web:43c321dc799ffa7cffe592",
+          measurementId: "G-VB1M9BVZZP"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Elements
+        const splashScreen = document.getElementById('splash-screen');
+        const premiumGate = document.getElementById('premium-gate');
+        const loginCard = document.getElementById('gate-login-card');
+        const errorCard = document.getElementById('gate-error-card');
+        const loginGoogleBtn = document.getElementById('btn-login-google');
+        const loginEmailBtn = document.getElementById('btn-login-email');
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const logoutBtn = document.getElementById('btn-logout');
+        const logoutErrorBtn = document.getElementById('btn-logout-error');
+
+        // Logic
+        async function checkAccess() {
+            // Wait for splash animation minimum time (2.5s) + buffer
+            await new Promise(r => setTimeout(r, 2800));
+
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    console.log("User detected:", user.uid);
+                    
+                    // Update User UI
+                    const displayName = user.displayName || user.email.split('@')[0];
+                    const email = user.email;
+                    document.getElementById('user-name-display').textContent = displayName;
+                    document.getElementById('user-avatar-display').textContent = displayName.substring(0, 2).toUpperCase();
+
+                    // FREE VERSION LOGIC: DIRECT ACCESS
+                    // No Firestore check needed for Free version
+                    console.log("Access Granted (Free Mode)");
+                    grantAccess();
+
+                } else {
+                    console.log("No user logged in");
+                    showGate(true); // Show Login Card
+                }
+            });
+        }
+
+        function showGate(isLoginMode) {
+            // Hide Splash
+            splashScreen.style.opacity = '0';
+            setTimeout(() => { splashScreen.style.display = 'none'; }, 500);
+
+            // Show Gate Overlay
+            premiumGate.style.display = 'flex';
+            
+            if (isLoginMode) {
+                loginCard.style.display = 'block';
+                errorCard.style.display = 'none';
+            } else {
+                loginCard.style.display = 'none';
+                errorCard.style.display = 'block';
+            }
+        }
+
+        function grantAccess() {
+            // Hide everything that blocks the view
+            splashScreen.style.opacity = '0';
+            setTimeout(() => { splashScreen.style.display = 'none'; }, 500);
+            
+            // CRITICAL FIX: Hide the premium gate explicitly
+            premiumGate.style.display = 'none';
+        }
+
+        // Login Handler (Google)
+        loginGoogleBtn.addEventListener('click', () => {
+            loginGoogleBtn.innerHTML = "Connexion..."; // Visual feedback
+            
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    // Logic will be handled by onAuthStateChanged listener
+                    console.log("Google Login Success");
+                }).catch((error) => {
+                    console.error("Login failed", error);
+                    alert("Erreur de connexion Google. Veuillez réessayer.");
+                    loginGoogleBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="margin-right:8px;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> Connexion avec Google`;
+                });
+        });
+
+        // Login Handler (Email)
+        loginEmailBtn.addEventListener('click', () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            if(!email || !password) {
+                alert("Veuillez remplir tous les champs");
+                return;
+            }
+            
+            loginEmailBtn.textContent = "Connexion..."; // Visual feedback
+
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    console.log("Email Login Success");
+                    // Logic handled by onAuthStateChanged
+                })
+                .catch((error) => {
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    console.error("Email login failed", error);
+                    alert("Erreur de connexion : " + errorMessage);
+                    loginEmailBtn.textContent = "Se connecter";
+                });
+        });
+
+        // Logout Handler (Main App)
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).then(() => {
+                location.reload(); // Refresh to reset state and show gate
+            }).catch((error) => {
+                console.error("Sign out error", error);
+            });
+        });
+
+        // Logout Handler (Error Gate - NEW)
+        if(logoutErrorBtn) {
+            logoutErrorBtn.addEventListener('click', () => {
+                signOut(auth).then(() => {
+                    location.reload(); 
+                }).catch((error) => {
+                    console.error("Sign out error", error);
+                });
+            });
+        }
+
+        // Start
+        checkAccess();
+
+    </script>
 </body>
 </html>
